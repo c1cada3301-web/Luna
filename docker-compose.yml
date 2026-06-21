@@ -1,0 +1,12 @@
+services:
+  luna-build:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+    volumes:
+      - ./overlay:/luna/overlay
+      - ./build:/luna/build
+      - ./out:/luna/out
+    working_dir: /luna
+    command: ./build/build-iso.sh
