@@ -21,14 +21,14 @@ initramfs: mount ISO9660, find apks/.boot_repository
        ↓
 apk add (локальный репозиторий + подписанный APKINDEX)
        ↓
-unpack localhost.apkovl.tar.gz (etc/ + root/)
+unpack localhost.apkovl.tar.gz (etc/ + root/ + home/ + usr/)
        ↓
 switch_root → OpenRC → local.d → login (banner + MOTD + prompt)
        ↓
 setup-apkrepos.start: /etc/apk/repositories ← только CDN (ISO-репо убирается)
 ```
 
-После login пользователь видит брендинг Luna 0.3.0 — см. [user-experience.md](user-experience.md).
+После login пользователь видит брендинг Luna 0.4.0 — см. [user-experience.md](user-experience.md).
 
 ISO содержит:
 
@@ -47,7 +47,7 @@ ISO содержит:
 | Целевая VM | QEMU, VirtualBox Intel | VirtualBox / UTM на Apple Silicon |
 | Bootloader | syslinux (BIOS) | GRUB UEFI (`BOOTAA64.EFI`) |
 | Kernel cmdline | `console=tty0 console=ttyS0 ip=off` | `console=tty0 ip=off` |
-| ISO | `out/luna-0.3.0-x86_64.iso` | `out/luna-0.3.0-aarch64.iso` |
+| ISO | `out/luna-0.4.0-x86_64.iso` | `out/luna-0.4.0-aarch64.iso` |
 
 Сборка: `LUNA_ARCH` в Docker (`docker-compose.yml`).
 
@@ -55,7 +55,7 @@ ISO содержит:
 
 ```
 ┌──────────────────────────────────────────┐
-│  luna CLI / agent             (фаза 3+)  │
+│  luna CLI + luna-agent stub   (фаза 3)   │
 ├──────────────────────────────────────────┤
 │  overlay: issue, motd, prompt, luna-help │
 │  local.d: network, apk repos, persist    │
@@ -70,19 +70,24 @@ ISO содержит:
 
 Kernel не форкаем. Кастомизация — overlay, `packages.txt`, apkovl.
 
-## Overlay Luna (0.3.0)
+## Overlay Luna (0.4.0)
 
 | Путь | Назначение |
 |------|------------|
 | `etc/issue`, `etc/motd` | Login banner и MOTD |
 | `etc/luna-release` | Версия образа (`LUNA_VERSION`) |
+| `etc/luna/locale.conf` | LANG / KEYMAP defaults |
 | `etc/profile.d/luna-prompt.sh` | Bash prompt `◐ luna:…` |
+| `etc/profile.d/luna-locale.sh` | export LANG из locale.conf |
 | `etc/skel/.bashrc` | Интерактивный shell для root/luna |
 | `etc/local.d/*.start` | DHCP, CDN repos, persist-диск |
-| `usr/local/bin/luna-help` | Quick reference на системе |
-| `usr/share/luna/welcome.txt` | Текст справки |
+| `usr/local/bin/luna` | CLI: version, status, help, tui |
+| `usr/share/luna/` | welcome.txt, luna-tui.sh |
+| `etc/init.d/luna-agent` | OpenRC stub (не в default runlevel) |
 
-Подробнее: [user-experience.md](user-experience.md), [default-packages.md](default-packages.md).
+**Boot `local.d`:** только `network-dhcp`, `setup-apkrepos`, `mount-persist` — как в 0.3.0. Не добавлять `setup-keymap` / `apk add` в `.start` (блокирует runlevel `local`).
+
+Подробнее: [user-experience.md](user-experience.md), [default-packages.md](default-packages.md), [ui-strategy.md](ui-strategy.md).
 
 ## Структура репозитория
 
@@ -105,7 +110,7 @@ Luna/
 ## Init и консоль
 
 - **OpenRC** — sysinit/boot/default runlevels
-- **Login:** `/etc/inittab` → `agetty` на `tty1`; banner из `/etc/issue`
+- **Login:** `/etc/inittab` → `openrc default`, затем `agetty` на `tty1` (без `--noclear`); banner из `/etc/issue`
 - Serial-консоли добавляет initramfs (`setup_inittab_console`), только если устройство доступно
 - Пользователи `root` и `luna` — пустой пароль (live demo); `luna` в группе `wheel` (sudo)
 
@@ -145,5 +150,5 @@ Boot-time `apk` требует доверенный `APKINDEX`. Схема:
 |------|------|
 | Сборка | Bash, Dockerfile |
 | Конфиг | shell, OpenRC, inittab |
-| Luna CLI (фаза 3) | Rust или Go |
+| Luna CLI (фаза 3) | shell (OpenRC stub) |
 | Kernel (если ever) | отдельный трек |

@@ -1,0 +1,121 @@
+#!/bin/sh
+# Luna CLI — version, status, help, tui
+
+set -eu
+
+LUNA_SHARE="${LUNA_SHARE:-/usr/share/luna}"
+
+load_release() {
+	if [ -r /etc/luna-release ]; then
+		# shellcheck disable=SC1091
+		. /etc/luna-release
+	fi
+}
+
+cmd_version() {
+	load_release
+	printf 'Luna %s\n' "${LUNA_VERSION:-unknown}"
+	printf '  phase:  %s\n' "${LUNA_PHASE:-?}"
+	printf '  base:   %s\n' "${LUNA_BASE:-Alpine}"
+	printf '  kernel: %s\n' "$(uname -r)"
+	printf '  arch:   %s\n' "$(uname -m)"
+}
+
+_net_line() {
+	ip -4 -o addr show scope global 2>/dev/null | awk '
+		{ printf "  %s  %s\n", $2, $4 }
+	' | head -5
+}
+
+_persist_state() {
+	if grep -q '[[:space:]]/mnt/persist[[:space:]]' /proc/mounts 2>/dev/null; then
+		df -h /mnt/persist 2>/dev/null | awk 'NR==2 { printf "mounted (%s free on %s)\n", $4, $1 }'
+	else
+		if blkid -L LUNA_DATA >/dev/null 2>&1; then
+			echo "LUNA_DATA found, not mounted"
+		else
+			echo "not configured"
+		fi
+	fi
+}
+
+_agent_state() {
+	if rc-service luna-agent status 2>/dev/null | grep -q started; then
+		echo "running (stub)"
+	else
+		echo "stopped (stub)"
+	fi
+}
+
+cmd_status() {
+	load_release
+	hostname="$(hostname 2>/dev/null || echo luna)"
+	uptime_s="$(cut -d. -f1 /proc/uptime 2>/dev/null || echo 0)"
+	uptime_h=$(( uptime_s / 3600 ))
+	uptime_m=$(( (uptime_s % 3600) / 60 ))
+
+	printf '◐ Luna %s · %s\n' "${LUNA_VERSION:-?}" "$hostname"
+	printf '  uptime:   %dh %dm\n' "$uptime_h" "$uptime_m"
+	printf '  memory:   '
+	free -h 2>/dev/null | awk '/^Mem:/ { print $3 " used / " $2 " total" }' || echo "n/a"
+	printf '  network:\n'
+	if _net_line | grep -q .; then
+		_net_line
+	else
+		printf '  (no global IPv4 yet)\n'
+	fi
+	printf '  persist:  %s\n' "$(_persist_state)"
+	printf '  agent:    %s\n' "$(_agent_state)"
+	printf '  sshd:     '
+	if rc-service sshd status 2>/dev/null | grep -q started; then
+		echo "running"
+	else
+		echo "stopped"
+	fi
+	if command -v apk >/dev/null 2>&1; then
+		printf '  packages: %s installed\n' "$(apk info -I 2>/dev/null | wc -l | tr -d ' ')"
+	fi
+}
+
+cmd_help() {
+	load_release
+	cat <<EOF
+Luna ${LUNA_VERSION:-?} — minimal live Linux
+
+Usage: luna <command>
+
+Commands:
+  version, -v     show Luna version
+  status          system overview (network, persist, services)
+  help, -h        this message
+  tui             simple interactive menu
+
+Legacy: luna-help (same as luna help)
+
+Agent stub: rc-service luna-agent start|stop|status
+EOF
+}
+
+cmd_tui() {
+	if ! command -v bash >/dev/null 2>&1; then
+		echo "luna tui requires bash" >&2
+		exit 1
+	fi
+	exec bash "$LUNA_SHARE/luna-tui.sh"
+}
+
+main() {
+	case "${1:-help}" in
+		version|-v|--version) cmd_version ;;
+		status)               cmd_status ;;
+		help|-h|--help|"")    cmd_help ;;
+		tui|menu)             cmd_tui ;;
+		*)
+			printf 'luna: unknown command %s\n\n' "$1" >&2
+			cmd_help >&2
+			exit 1
+			;;
+	esac
+}
+
+main "$@"

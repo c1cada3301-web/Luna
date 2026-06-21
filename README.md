@@ -4,10 +4,12 @@
 
 ## Статус
 
-**Luna 0.3.0 — фаза 2** (июнь 2026)
+**Luna 0.4.0 — фаза 3** (июнь 2026)
 
 - Загрузочный ISO (ARM64 + x86_64), diskless live
-- Брендинг: login banner, MOTD, bash-prompt, `luna-help`
+- CLI **`luna`** (version, status, help, tui)
+- OpenRC stub **`luna-agent`** для будущего AI-shell
+- Брендинг: login banner, MOTD, bash-prompt
 - Сеть (DHCP), online `apk add`, curl/git/vim/htop/mc
 - Пользователи `root` и `luna` (sudo), SSH
 - Опциональный persist-диск (`LUNA_DATA` → `/mnt/persist`)
@@ -35,21 +37,22 @@ docker compose run --rm luna-build-x86_64    # QEMU / Intel
 
 | ISO | Архитектура | Тест |
 |-----|-------------|------|
-| `out/luna-0.3.0-aarch64.iso` (~112 MB) | ARM64 | VirtualBox: **ARM 64-bit, EFI ON** |
-| `out/luna-0.3.0-x86_64.iso` | x86_64 | QEMU, VirtualBox Intel |
+| `out/luna-0.4.0-aarch64.iso` (~112 MB) | ARM64 | VirtualBox: **ARM 64-bit, EFI ON** |
+| `out/luna-0.4.0-x86_64.iso` | x86_64 | QEMU, VirtualBox Intel |
 
 ### 3. VirtualBox (Apple Silicon)
 
 1. Other Linux **(ARM 64-bit)**, EFI **ON**, RAM **1024–2048 MB**
 2. Network → Adapter 1 → **NAT**
-3. ISO → `out/luna-0.3.0-aarch64.iso`
+3. ISO → `out/luna-0.4.0-aarch64.iso`
 
 **Вход:** `luna` или `root`, пароль **пустой** (Enter).
 
 ### 4. После входа
 
 ```sh
-luna-help               # справка на системе
+luna status             # обзор системы
+luna help               # команды CLI
 cat /etc/luna-release   # версия
 curl -I https://example.com
 apk add mc              # online repos (CDN)
@@ -74,7 +77,7 @@ Prompt: `◐ luna:~$` (фиолетово-синий).
 Luna/
 ├── build/          # Dockerfile, build-rootfs.sh, build-iso.sh, packages.txt
 ├── overlay/etc/    # брендинг, сеть, local.d
-├── overlay/usr/    # luna-help, welcome.txt
+├── overlay/usr/    # luna CLI, luna-help, welcome.txt
 ├── scripts/
 ├── docs/
 ├── CHANGELOG.md
@@ -86,8 +89,9 @@ Luna/
 | Документ | О чём |
 |----------|--------|
 | [Roadmap](docs/roadmap.md) | Фазы 0–4 |
-| [Опыт пользователя](docs/user-experience.md) | Banner, MOTD, prompt |
-| [Пакеты по умолчанию](docs/default-packages.md) | Состав образа 0.3.0 |
+| [Luna CLI](docs/luna-cli.md) | `luna version`, `status`, `tui` |
+| [Пакеты по умолчанию](docs/default-packages.md) | Состав образа 0.4.0 |
+| [UI без GNOME](docs/ui-strategy.md) | Terminal, Wayland, Luna Shell |
 | [Changelog](CHANGELOG.md) | История версий |
 | [Документация](docs/README.md) | Индекс всех docs |
 | [Архитектура](docs/architecture.md) | Boot, dual-arch, apk |

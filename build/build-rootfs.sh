@@ -39,7 +39,9 @@ fi
 
 cp -a "$ROOT/overlay/." "$ROOTFS/"
 chmod +x "$ROOTFS"/etc/local.d/*.start 2>/dev/null || true
+chmod +x "$ROOTFS"/etc/init.d/luna-agent 2>/dev/null || true
 chmod +x "$ROOTFS"/usr/local/bin/* 2>/dev/null || true
+chmod +x "$ROOTFS"/usr/share/luna/*.sh 2>/dev/null || true
 
 # busybox mdev: @ надёжнее */path (иначе «persistent-storage: not found» при coldplug)
 sed -i 's|\*/lib/mdev/persistent-storage|@/lib/mdev/persistent-storage|g' \
@@ -68,7 +70,7 @@ configure_inittab() {
 ::sysinit:/sbin/openrc boot
 ::wait:/sbin/openrc default
 
-tty1::respawn:/sbin/agetty --noclear 38400 tty1 linux
+tty1::respawn:/sbin/agetty 38400 tty1 linux
 
 ::ctrlaltdel:/sbin/reboot
 ::shutdown:/sbin/openrc shutdown
@@ -115,6 +117,9 @@ rc-update add sshd default
 rc-update add mount-ro shutdown
 rc-update add killprocs shutdown
 rc-update add savecache shutdown
+
+# SSH host keys — иначе sshd при первом boot может долго «висеть» до login
+ssh-keygen -A 2>/dev/null || true
 CHROOT
 
 KV="$(ls "$ROOTFS/lib/modules")"

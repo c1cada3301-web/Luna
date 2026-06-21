@@ -1,6 +1,11 @@
+
 +------------------------------+
-|        L U N A  0.3.0        |
+|        L U N A  0.4.0        |
 |   minimal Linux · live ISO   |
 +------------------------------+
  login: luna or root
  password: (empty — press Enter)
+
+  after login: luna status · luna help · luna tui
+
+login:

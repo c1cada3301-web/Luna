@@ -24,14 +24,15 @@ Luna — операционная система, которую хочется 
 
 ## Ближайшая цель (сейчас)
 
-**Luna 0.3.0** — минимальный live-дистрибутив с узнаваемым брендингом:
+**Luna 0.4.0** — минимальный live-дистрибутив с узнаваемым брендингом и CLI `luna`:
 
 1. ✅ Загружается с ISO в VirtualBox / QEMU
 2. ✅ Рабочий терминал, сеть, `apk add`, `git clone`
-3. ✅ Брендинг Luna (banner, MOTD, prompt, `luna-help`)
-4. ✅ Воспроизводимая сборка одной Docker-командой
+3. ✅ Брендинг Luna (banner, MOTD, prompt)
+4. ✅ CLI `luna` (version, status, help, tui)
+5. ✅ Воспроизводимая сборка одной Docker-командой
 
-**Следующий шаг:** [Фаза 3](roadmap.md#фаза-3--luna-userspace) — утилита `luna` (CLI).
+**Следующий шаг:** [Фаза 4](roadmap.md#фаза-4--зачатки-ai-shell-далёкое-будущее) — AI-shell prototype. Стратегия UI без GNOME: [ui-strategy.md](ui-strategy.md).
 
 ## Принципы
 
@@ -44,7 +45,7 @@ Luna — операционная система, которую хочется 
 ## Чего Luna **не** будет на старте
 
 - Собственного ядра с нуля
-- Полноценного desktop environment (GNOME/KDE)
+- Полноценного desktop environment (GNOME/KDE) — см. [ui-strategy.md](ui-strategy.md)
 - Встроенного LLM и «умного» shell
 - Поддержки всего железа (достаточно VirtualBox/QEMU)
 

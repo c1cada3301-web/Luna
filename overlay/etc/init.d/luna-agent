@@ -1,0 +1,33 @@
+#!/sbin/openrc-run
+# Luna agent — OpenRC stub for future AI shell (phase 4+)
+
+name="Luna agent"
+description="Luna agent stub (AI shell placeholder)"
+
+depend() {
+	need net
+	after local
+}
+
+start() {
+	ebegin "Starting $name (stub)"
+	install -d -m 0755 /run/luna
+	date -Iseconds > /run/luna/agent.stub 2>/dev/null || date > /run/luna/agent.stub
+	eend 0
+}
+
+stop() {
+	ebegin "Stopping $name"
+	rm -f /run/luna/agent.stub
+	eend 0
+}
+
+status() {
+	if [ -f /run/luna/agent.stub ]; then
+		einfo "started (stub — no AI yet)"
+		einfo "since: $(cat /run/luna/agent.stub 2>/dev/null)"
+		return 0
+	fi
+	einfo "stopped"
+	return 3
+}

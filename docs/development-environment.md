@@ -13,7 +13,7 @@ Docker Desktop, QEMU (`brew install qemu`), VirtualBox, Git.
 docker compose run --rm luna-build-aarch64
 ```
 
-Результат: `out/luna-0.3.0-aarch64.iso` (~112 MB)
+Результат: `out/luna-0.4.0-aarch64.iso` (~112 MB)
 
 ## VirtualBox (Apple Silicon)
 
@@ -23,9 +23,9 @@ docker compose run --rm luna-build-aarch64
 | EFI | **ON** |
 | RAM | **1024–2048 MB** |
 | Network | Adapter 1 **NAT** |
-| ISO | `out/luna-0.3.0-aarch64.iso` |
+| ISO | `out/luna-0.4.0-aarch64.iso` |
 
-**Login:** `luna` или `root`, пароль пустой (Enter). После входа — MOTD и prompt `◐ luna:…$`.
+**Login:** `luna` или `root`, пароль пустой (Enter). Экран входа — ASCII banner; OpenRC scrollback в истории tty.
 
 ## Проверка образа
 
@@ -34,30 +34,35 @@ docker compose run --rm luna-build-aarch64
 ```sh
 ip addr
 curl -I https://example.com
-apk update && apk add mc    # без ошибок index not found
-htop                        # предустановлен
+apk update && apk add tree
+htop
+mc
 sudo id
-git clone https://github.com/user/repo.git   # проверено в VB
+git clone https://github.com/user/repo.git
 ```
 
-### Фаза 2 — брендинг
+### Фаза 3 — Luna CLI
 
 ```sh
-cat /etc/luna-release       # LUNA_VERSION=0.3.0
-luna-help                   # quick reference
+luna version
+luna status
+luna tui
+sudo rc-service luna-agent start   # stub
 ```
 
-Login banner (рамка `L U N A`) — на экране **до** ввода логина. Подробнее: [user-experience.md](user-experience.md).
+→ [luna-cli.md](luna-cli.md)
 
 ## Отладка
 
 | Симптом | Решение |
 |---------|---------|
-| `Network unreachable` | NAT в VB, пересобери ISO с `network-dhcp.start` |
-| `package mentioned in index not found` | Старый ISO или локальный+CDN repos; нужен `setup-apkrepos` (замена на CDN) |
-| `apk update` → v3.20.10 | Неверный URL; CDN использует `v3.20` |
+| Зависание на `Starting local ...` | Не вызывать `setup-keymap` / `apk add` в `local.d`; см. [architecture.md](architecture.md) |
+| `Network unreachable` | NAT в VB, пересобери ISO |
+| `package mentioned in index not found` (initramfs) | Косметика; login должен появиться |
+| `package mentioned in index not found` (apk add) | Старый ISO или смешанные repos; нужен `setup-apkrepos` |
+| `loadkmap failed` | Убрать `loadkmap` из boot; `setup-keymap` после login |
 | Login `luna` fail | ISO 0.1.0; нужен ≥ 0.2.0 |
-| `persistent-storage: not found` | Косметика при mdev coldplug; на работу не влияет |
+| `persistent-storage: not found` | Косметика mdev; persist через `LUNA_DATA` |
 | ping fail, curl ok | ICMP блокируется NAT — нормально |
 
 ## QEMU

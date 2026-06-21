@@ -1,45 +1,47 @@
-# Опыт пользователя (Luna 0.3.0)
+# Опыт пользователя (Luna 0.4.0)
 
 Как выглядит Luna при загрузке в VirtualBox / QEMU — минимально, но узнаваемо.
 
 ## Последовательность boot
 
 ```
-GRUB «Luna» → OpenRC [*] → login banner → luna / Enter → MOTD → prompt
+GRUB «Luna» → OpenRC [*] → (clear) → login banner → luna / Enter → MOTD → prompt
 ```
 
 1. **GRUB** — пункт меню Luna, ядро `virt`, initramfs с локального ISO.
-2. **OpenRC** — монтирование FS, `mdev`, `hwdrivers`, `networking`, `sshd`.
-3. **Login banner** — `/etc/issue`: рамка `L U N A 0.3.0`, подсказка login/password.
+2. **OpenRC** — монтирование FS, `mdev`, `hwdrivers`, `networking`, `local`, `sshd`.
+3. **Login banner** — agetty очищает tty1 и показывает `/etc/issue`.
 4. **Login** — `luna` или `root`, пароль пустой (Enter).
-5. **MOTD** — `/etc/motd`: версия, `luna-help`, сеть, persist.
-6. **Prompt** — `◐ luna:~/path$` (bash, фиолетово-синий).
+5. **MOTD** — `/etc/motd` при первом входе в shell.
+6. **Prompt** — `◐ luna:~/path$` (bash).
+
+Красные `ERROR: … package mentioned in index not found` в initramfs — **косметика** (локальный индекс ISO vs world); на login не влияют.
 
 ## Login banner (`/etc/issue`)
 
 ```
 +------------------------------+
-|        L U N A  0.3.0        |
+|        L U N A  0.4.0        |
 |   minimal Linux · live ISO   |
 +------------------------------+
  login: luna or root
  password: (empty — press Enter)
+
+  after login: luna status · luna help · luna tui
+
+login:
 ```
 
-Показывается **до** ввода логина (agetty на tty1).
+- Показывается на **tty1** до ввода логина.
+- Рамка выровнена под ~80 колонок; на широком окне VirtualBox может быть слева — это нормально для текстовой консоли.
+- Отдельного «окна» или второго TTY нет — тот же fullscreen терминал VB после clear.
 
 ## После входа
 
-**MOTD** (один раз за сессию через `/etc/profile`):
+**MOTD:**
 
 ```
-── Luna 0.3.0 · minimal live Linux ──
-
-  luna-help          quick reference
-  cat /etc/luna-release
-
-  Network: DHCP · apk add <pkg> · sshd on
-  Persist: mkfs.ext4 -L LUNA_DATA /dev/sdX → /mnt/persist
+── Luna 0.4.0 ──  luna status · luna help · setup-timezone · setup-keymap
 ```
 
 **Prompt** (`/etc/profile.d/luna-prompt.sh`):
@@ -49,33 +51,51 @@ GRUB «Luna» → OpenRC [*] → login banner → luna / Enter → MOTD → prom
 | `luna` | `◐ luna:~$` |
 | `root` | `◐ luna:~#` |
 
-**Справка на системе:**
+**CLI:**
 
 ```sh
-luna-help                 # /usr/share/luna/welcome.txt
-cat /etc/luna-release     # LUNA_VERSION=0.3.0
+luna status
+luna version
+luna help
+luna tui          # меню вручную, не при boot
+luna-help         # → luna help
+mc                # файловый менеджер (TUI)
+cat /etc/luna-release
 ```
+
+**Locale / keyboard** (после login, когда CDN repos уже настроены):
+
+```sh
+setup-keymap us    # или ru
+setup-timezone Europe/Moscow
+```
+
+Не вызывать `setup-keymap` в `local.d` при boot — блокирует OpenRC.
 
 ## Типичная сессия (проверено)
 
 ```sh
+luna:~$ luna status
 luna:~$ curl -I https://example.com
-luna:~$ apk add git
+luna:~$ apk add tree
 luna:~$ git clone https://github.com/user/repo.git
-luna:~/repo$ ls
 ```
 
-Сеть через NAT, CDN после `setup-apkrepos.start`. Данные в RAM — после reboot исчезают (кроме `/mnt/persist`).
+Сеть через NAT, CDN после `setup-apkrepos.start`. Данные в RAM — после reboot исчезают (кроме `/mnt/persist` с диском `LUNA_DATA`).
 
 ## Известные косметические сообщения
 
-При coldplug `mdev` иногда в scrollback:
+**mdev coldplug** (scrollback):
 
 ```text
 sh: /lib/mdev/persistent-storage: not found
 ```
 
-На работу системы не влияет; persist через `LABEL=LUNA_DATA` работает отдельно (`mount-persist.start`).
+На работу не влияет; persist через `LABEL=LUNA_DATA` — отдельно (`mount-persist.start`).
+
+## UI и desktop
+
+GNOME и GUI-FM **не входят** в образ. Стратегия интерфейса: [ui-strategy.md](ui-strategy.md).
 
 ## Файлы брендинга в репозитории
 
@@ -84,9 +104,12 @@ sh: /lib/mdev/persistent-storage: not found
 | `overlay/etc/issue` | Login banner |
 | `overlay/etc/motd` | MOTD |
 | `overlay/etc/luna-release` | Версия (источник для имени ISO) |
+| `overlay/etc/luna/locale.conf` | LANG / KEYMAP defaults (shell) |
 | `overlay/etc/profile.d/luna-prompt.sh` | PS1 |
+| `overlay/etc/profile.d/luna-locale.sh` | export LANG |
 | `overlay/etc/skel/.bashrc` | bash для root и luna |
-| `overlay/usr/local/bin/luna-help` | Справка |
-| `overlay/usr/share/luna/welcome.txt` | Текст справки |
+| `overlay/usr/local/bin/luna` | CLI |
+| `overlay/etc/init.d/luna-agent` | Agent stub |
+| `overlay/etc/local.d/*.start` | DHCP, CDN repos, persist |
 
 Версия ISO: `grep LUNA_VERSION overlay/etc/luna-release` → `out/luna-<ver>-<arch>.iso`.

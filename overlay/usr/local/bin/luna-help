@@ -1,2 +1,2 @@
 #!/bin/sh
-exec cat /usr/share/luna/welcome.txt
+exec luna help

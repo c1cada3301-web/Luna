@@ -51,13 +51,21 @@ prepare_alpine_iso_tree() {
     chmod 700 "$apkovl_dir/root"
     chown 1000:1000 "$apkovl_dir/home/luna" 2>/dev/null || true
     cp -a "$ROOTFS/etc" "$apkovl_dir/"
+    if [ -d "$ROOTFS/usr/local" ]; then
+        mkdir -p "$apkovl_dir/usr"
+        cp -a "$ROOTFS/usr/local" "$apkovl_dir/usr/"
+    fi
+    if [ -d "$ROOTFS/usr/share/luna" ]; then
+        mkdir -p "$apkovl_dir/usr/share"
+        cp -a "$ROOTFS/usr/share/luna" "$apkovl_dir/usr/share/"
+    fi
     if [ -d "$ROOTFS/home/luna" ]; then
         cp -a "$ROOTFS/home/luna/." "$apkovl_dir/home/luna/" 2>/dev/null || true
     fi
     # Не копируем online-репозитории: при наличии сети в VM apk тянет
     # чужой индекс и падает с "package mentioned in index not found".
     rm -f "$apkovl_dir/etc/apk/repositories"
-    tar -C "$apkovl_dir" -czf "$ISODIR/localhost.apkovl.tar.gz" etc root home
+    tar -C "$apkovl_dir" -czf "$ISODIR/localhost.apkovl.tar.gz" etc root home usr
 
     if [ -f "$ROOTFS/etc/alpine-release" ]; then
         cp "$ROOTFS/etc/alpine-release" "$ISODIR/.alpine-release"

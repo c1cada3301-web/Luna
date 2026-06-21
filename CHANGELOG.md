@@ -2,6 +2,36 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.4.0] — 2026-06-21
+
+### Added
+
+- CLI `luna`: `version`, `status`, `help`, `tui`
+- OpenRC stub `luna-agent` (не в default runlevel)
+- [docs/luna-cli.md](docs/luna-cli.md), [docs/ui-strategy.md](docs/ui-strategy.md)
+- `usr/` в `localhost.apkovl.tar.gz` — CLI доступен после diskless boot
+- `musl-locales`, `musl-locales-lang`, `kbd-bkeymaps`
+- `/etc/luna/locale.conf`, `/etc/profile.d/luna-locale.sh` (LANG в shell)
+- SSH host keys генерируются при сборке rootfs
+
+### Changed
+
+- `luna-help` делегирует в `luna help`
+- MOTD короче; login banner с рамкой ASCII (`/etc/issue`)
+- agetty **без** `--noclear` — чистый экран перед login (scrollback OpenRC в истории tty)
+
+### Fixed
+
+- Boot зависал на `Starting local ...` — удалён `luna-locale.start` с `setup-keymap` при boot (`setup-keymap` вызывает `apk add` до DHCP/CDN)
+- Восстановлены boot-скрипты `network-dhcp.start` и `setup-apkrepos.start` как в 0.3.0
+- `luna: command not found` — в apkovl раньше был только `etc/`, без `usr/local/bin/luna`
+- Откат экспериментов с `mkinitfs` stub / `linux-virt --no-deps` / `--no-scripts` — ломали init или apk
+- Ошибки `loadkmap` при boot — убран принудительный `loadkmap` в boot runlevel; раскладка: `setup-keymap us` после login
+
+### Verified
+
+- VirtualBox ARM64: login, `luna status`, `curl`, `apk add`, `git clone`
+
 ## [0.3.0] — 2026-06-21
 
 ### Added

@@ -49,17 +49,19 @@
 
 ---
 
-## Фаза 3 — Luna userspace
+## Фаза 3 — Luna userspace ✅
 
 **Цель:** первые собственные программы, не только конфиги.
 
-- Утилита `luna` (CLI): версия, статус, help
-- Простой TUI — опционально
-- OpenRC-сервис для будущего agent (заглушка)
+- [x] Утилита `luna` (CLI): version, status, help
+- [x] Простой TUI — `luna tui`
+- [x] OpenRC-сервис для будущего agent (`luna-agent` stub)
 
-**Критерий готовности:** команда `luna` работает из коробки.
+**Критерий:** команда `luna` работает из коробки — **выполнен** (июнь 2026)
 
-**Оценка:** 2–4 недели
+**Завершено:** июнь 2026
+
+→ [luna-cli.md](luna-cli.md)
 
 ---
 
@@ -70,6 +72,8 @@
 - Локальный или API-based LLM
 - Intent → shell command / service action
 - Sandbox, подтверждение опасных команд
+
+UI: terminal-first или минимальный compositor — не GNOME. См. [ui-strategy.md](ui-strategy.md).
 
 **Не начинаем**, пока не закрыты фазы 1–2.
 
@@ -90,7 +94,7 @@
 flowchart LR
     M0[M0: ISO boots ✅] --> M1[M1: Network + packages]
     M1 --> M2[M2: Luna branding ✅]
-    M2 --> M3[M3: Luna CLI/TUI]
+    M2 --> M3[M3: Luna CLI ✅]
     M3 --> M4[M4: AI shell prototype]
     M0 -.-> OSDev[OSDev experiments]
 ```

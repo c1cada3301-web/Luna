@@ -1,6 +1,6 @@
 # Пакеты Luna by default
 
-Luna 0.3.0 — live ISO на **Alpine Linux 3.20**. Все пакеты ниже попадают в локальный APK-репозиторий на ISO и устанавливаются при boot через initramfs.
+Luna 0.4.0 — live ISO на **Alpine Linux 3.20**. Все пакеты ниже попадают в локальный APK-репозиторий на ISO и устанавливаются при boot через initramfs.
 
 ## Базовые (build-rootfs.sh)
 
@@ -32,9 +32,26 @@ Luna 0.3.0 — live ISO на **Alpine Linux 3.20**. Все пакеты ниже
 | `openssh` | SSH-сервер и клиент |
 | `e2fsprogs` | ext4 для persist-диска `LUNA_DATA` |
 | `htop` | Монитор процессов |
-| `mc` | Файловый менеджер |
+| `mc` | TUI файловый менеджер (двухпанельный) |
+| `musl-locales` | UTF-8 локали (musl) |
+| `musl-locales-lang` | Языковые данные (ru, de, …) |
+| `kbd-bkeymaps` | Раскладки для `setup-keymap` |
 
-## Пользователи и сервисы
+## Locale / timezone / keyboard
+
+| Команда | Назначение |
+|---------|------------|
+| `setup-timezone` | Часовой пояс (из `alpine-conf`, tzdata в base) |
+| `setup-keymap us\|ru\|de` | Консольная раскладка (**после login**, не в `local.d`) |
+| `/etc/luna/locale.conf` | `LUNA_LANG`, `LUNA_KEYMAP` — подхватывает `profile.d/luna-locale.sh` |
+
+Пример для русского:
+
+```sh
+sudo setup-timezone Europe/Moscow
+sudo setup-keymap ru
+# в /etc/luna/locale.conf: LUNA_LANG=ru_RU.UTF-8
+```
 
 | Элемент | Значение |
 |---------|----------|
@@ -44,7 +61,7 @@ Luna 0.3.0 — live ISO на **Alpine Linux 3.20**. Все пакеты ниже
 
 ## Не в образе (ставятся после boot)
 
-Любой пакет из Alpine CDN через `apk add` после `setup-apkrepos.start`.
+Любой пакет из Alpine CDN через `apk add` после `setup-apkrepos.start`. GNOME/KDE и GUI-FM — не в образе; см. [ui-strategy.md](ui-strategy.md).
 
 ## Где менять состав
 

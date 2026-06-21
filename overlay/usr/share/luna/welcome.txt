@@ -1,5 +1,11 @@
-Luna 0.3.0 — quick reference
+Luna 0.4.0 — quick reference
 ============================
+
+CLI
+  luna version       version and kernel
+  luna status        network, persist, services
+  luna help          all commands
+  luna tui           interactive menu
 
 Version:    cat /etc/luna-release
 Packages:   apk info -I | wc -l installed from ISO
@@ -23,7 +29,10 @@ Persist disk (optional)
   mkfs.ext4 -L LUNA_DATA /dev/sdX
   reboot → auto-mount at /mnt/persist
 
+Agent (stub, phase 3)
+  rc-service luna-agent start|stop|status
+
 SSH
   ssh luna@<vm-ip>     from host (NAT port forward if needed)
 
-Docs on build host: docs/default-packages.md, CHANGELOG.md
+Docs on build host: docs/luna-cli.md, CHANGELOG.md

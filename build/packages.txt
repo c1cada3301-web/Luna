@@ -1,5 +1,4 @@
 # Дополнительные пакеты Luna (базовые — в build-rootfs.sh)
-# Фаза M0: минимум. Сеть и git — на фазе 1.
 
 bash
 nano
@@ -12,3 +11,7 @@ openssh
 e2fsprogs
 htop
 mc
+# locale / timezone / keyboard (setup-timezone, setup-keymap — alpine-conf)
+musl-locales
+musl-locales-lang
+kbd-bkeymaps

@@ -1,7 +1,1 @@
-── Luna 0.3.0 · minimal live Linux ──
-
-  luna-help          quick reference
-  cat /etc/luna-release
-
-  Network: DHCP · apk add <pkg> · sshd on
-  Persist: mkfs.ext4 -L LUNA_DATA /dev/sdX → /mnt/persist
+── Luna 0.4.0 ──  luna status · luna help · setup-timezone · setup-keymap
