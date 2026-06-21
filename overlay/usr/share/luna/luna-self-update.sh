@@ -167,7 +167,8 @@ apply_luna_base_apk() {
 	fi
 
 	tmpdir="$(mktemp -d)"
-	trap 'rm -rf "$tmpdir"' RETURN
+	# Literal path in trap — local tmpdir is unset before RETURN trap runs (set -u)
+	trap "rm -rf '$tmpdir'" RETURN
 
 	printf '  downloading %s\n' "$(basename "$url")"
 	github_download "$url" "$tmpdir/apk-repo.tar.gz"
@@ -183,13 +184,15 @@ apply_luna_base_apk() {
 	apk add --force-overwrite --allow-untrusted "$apk"
 	preserve_installed_mode
 	fix_permissions
+	trap - RETURN
+	rm -rf "$tmpdir"
 }
 
 apply_userspace() {
 	local url="$1" tmpdir archive
 
 	tmpdir="$(mktemp -d)"
-	trap 'rm -rf "$tmpdir"' RETURN
+	trap "rm -rf '$tmpdir'" RETURN
 	archive="$tmpdir/userspace.tar.gz"
 
 	printf '  downloading %s\n' "$(basename "$url")"
@@ -199,6 +202,8 @@ apply_userspace() {
 	tar -xzf "$archive" -C /
 	preserve_installed_mode
 	fix_permissions
+	trap - RETURN
+	rm -rf "$tmpdir"
 }
 
 # Returns 0 if an update was applied, 1 if already current, 2 on skip/error.

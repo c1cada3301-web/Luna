@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.5] — 2026-06-21
+
+### Fixed
+
+- **`luna self-update`:** `tmpdir: unbound variable` — RETURN trap с `set -u` (literal path + явный cleanup)
+
 ## [0.8.4] — 2026-06-21
 
 ### Added
