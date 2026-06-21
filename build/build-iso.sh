@@ -55,6 +55,10 @@ prepare_alpine_iso_tree() {
         mkdir -p "$apkovl_dir/usr"
         cp -a "$ROOTFS/usr/local" "$apkovl_dir/usr/"
     fi
+    if [ -d "$ROOTFS/usr/bin" ]; then
+        mkdir -p "$apkovl_dir/usr/bin"
+        cp -a "$ROOTFS/usr/bin/luna" "$ROOTFS/usr/bin/luna-help" "$apkovl_dir/usr/bin/" 2>/dev/null || true
+    fi
     if [ -d "$ROOTFS/usr/share/luna" ]; then
         mkdir -p "$apkovl_dir/usr/share"
         cp -a "$ROOTFS/usr/share/luna" "$apkovl_dir/usr/share/"

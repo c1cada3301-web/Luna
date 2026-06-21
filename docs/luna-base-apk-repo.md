@@ -171,7 +171,7 @@ docker compose run --rm luna-build-aarch64 ./scripts/build-apk-repo.sh
 |------|------------|
 | `luna-*-aarch64.iso` | live + install |
 | `luna-*-x86_64.iso` | … |
-| `luna-*-userspace.tar.gz` | legacy (убрать в 1.0.0) |
+| `luna-*-userspace.tar.gz` | **legacy** — убран из Releases в 0.9.0; fallback в self-update |
 | `luna-*-apk-repo.tar.gz` | **новый** — signed repo |
 | `SHA256SUMS` | все файлы |
 
@@ -278,10 +278,10 @@ apk add --repositories-file … luna-base
 |---|--------|-----------|-----------|
 | 1 | `packages/luna-base/APKBUILD` + post-install | ✅ |
 | 2 | `scripts/build-apk-repo.sh` | ✅ |
-| 3 | CI: публикация `apk-repo.tar.gz` | S | Releases |
-| 4 | `_ensure_luna_apk_repo` + `apk upgrade luna-base` | M | upgrade без tar |
-| 5 | post-install + setup-apkrepos | M | fresh install |
-| 6 | rootfs через `apk add luna-base` | M | нет дубля overlay |
+| 3 | CI: публикация `apk-repo.tar.gz` | ✅ |
+| 4 | `_ensure_luna_apk_repo` + `apk upgrade luna-base` | ✅ |
+| 5 | post-install + setup-apkrepos | ✅ |
+| 6 | rootfs через `apk add luna-base` | ✅ 0.9.0 |
 | 7 | (опц.) GitHub Pages HTTP repo | S | `apk update` без tarball |
 
 **Milestone 5.4.4** закрывается пунктами **1–5**. Пункт 6 — polish к **1.0.0**.

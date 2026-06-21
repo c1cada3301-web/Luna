@@ -259,7 +259,7 @@ install_luna_apk_repo_bundle() {
 	cp -a /usr/share/luna/apk-repo/. "$SYSROOT/var/lib/luna/apk-repo/"
 }
 
-# setup-alpine/lbu не включает /usr/local — копируем Luna userspace с live overlay
+# setup-alpine/lbu не включает /usr/local — legacy fallback без bundled apk-repo
 install_luna_overlay() {
 	local src dst rel
 	for rel in \
@@ -294,6 +294,20 @@ install_luna_overlay() {
 	chmod +x "$SYSROOT"/etc/init.d/luna-agent 2>/dev/null || true
 }
 
+install_luna_to_sysroot() {
+	install_luna_apk_repo_bundle || true
+
+	if [ -f /etc/network/interfaces ]; then
+		install -D -m644 /etc/network/interfaces "$SYSROOT/etc/network/interfaces"
+	fi
+
+	if [ -d "$SYSROOT/var/lib/luna/apk-repo/noarch" ]; then
+		return 0
+	fi
+
+	install_luna_overlay
+}
+
 post_install() {
 	local disk="$1" hostname="$2" root_pass="$3" luna_pass="$4"
 	local root_part
@@ -305,8 +319,7 @@ post_install() {
 	root_part="$(find_root_partition "$disk")" || die "root partition missing after install"
 
 	mount_sysroot "$disk"
-	install_luna_overlay
-	install_luna_apk_repo_bundle || true
+	install_luna_to_sysroot
 
 	# Пароли через файлы — heredoc ломает $, :, \ в паролях
 	printf '%s' "$root_pass" > "$SYSROOT/tmp/.luna-pass-root"
@@ -369,7 +382,7 @@ fi
 
 chmod +x /etc/local.d/*.start 2>/dev/null || true
 chmod +x /etc/init.d/luna-agent 2>/dev/null || true
-chmod +x /usr/local/bin/* 2>/dev/null || true
+chmod +x /usr/bin/luna /usr/bin/luna-help 2>/dev/null || true
 chmod +x /usr/share/luna/*.sh 2>/dev/null || true
 
 rc-update add sshd default 2>/dev/null || true

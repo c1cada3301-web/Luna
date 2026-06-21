@@ -81,11 +81,6 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: Userspace bundle
-        run: |
-          chmod +x scripts/bundle-userspace.sh scripts/build-apk-repo.sh
-          ./scripts/bundle-userspace.sh release-assets
-
       - name: Setup APK signing key
         env:
           LUNA_REPO_RSA: ${{ secrets.LUNA_REPO_RSA }}

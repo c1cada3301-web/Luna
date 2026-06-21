@@ -28,7 +28,7 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 
 ## Фаза 5 — Полноценный дистрибутив (в работе)
 
-**Сейчас:** **5.3 bare metal** — linux-lts, firmware, mini-PC.
+**Сейчас:** **5.3 bare metal** — smoke-test на реальном железе.
 
 **Цель:** Luna ставится на диск, переживает reboot, обновляется, работает на реальном железе.
 
@@ -72,23 +72,21 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 
 **Milestone 5.3:** Luna с USB на реальном ARM/x86 mini-PC, SSH с Mac по LAN.
 
-### 5.4 — Релизы как продукт ← **в работе**
+### 5.4 — Релизы как продукт ✅ (apk-repo)
 
 | # | Задача | Статус |
 |---|--------|--------|
 | 1 | ISO на GitHub Releases по тегу `v0.x.0` | ✅ workflow + scripts |
 | 2 | CHANGELOG + bump `luna-release` в одном ритуале | ✅ `scripts/release.sh` |
 | 3 | Канал **stable** (latest release) | ✅ `gh release --latest` |
-| 4 | apk-репо `luna-base` | ⏳ фаза 3 ✅ runtime · фаза 4 ISO/rootfs [план](luna-base-apk-repo.md) |
+| 4 | apk-репо `luna-base` | ✅ [план](luna-base-apk-repo.md) фазы 1–4 |
 
-**Milestone 5.4:** Luna 1.0.0 — Releases, upgrade, bare metal.
-
-**Первый релиз:** `v0.8.0` — `./scripts/release-local.sh` или push tag после merge workflow.
+**Milestone 5.4:** Luna 0.9.0 — ISO + apk-repo, upgrade через `luna-base`, без userspace.tar.gz.
 
 ### Порядок работ
 
 ```
-5.1 ✅ ──► 5.2 ✅ ──► 5.3 ◄── СЕЙЧАС ──► 5.4 releases
+5.1 ✅ ──► 5.2 ✅ ──► 5.3 ◄── СЕЙЧАС ──► 5.4 ✅ ──► 1.0.0
 ```
 
 **Не делаем в фазе 5:** GNOME/KDE, LLM (пока), свой пакетный менеджер, своё ядро.
@@ -98,12 +96,11 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 ## Что дальше
 
 1. **Mini-PC** smoke-test (5.3.4)
-2. **apk-репо фаза 4** — rootfs только через `luna-base`, без дубля overlay
+2. **1.0.0** — убрать userspace fallback в self-update, tag stable
 
 ### Горизонт
 
 | Версия | Фокус |
 |--------|--------|
-| **0.8.x** | bare metal validation |
-| **0.9.x** | x86_64 smoke, polish post-install |
-| **1.0.0** | Releases, stable, без LLM |
+| **0.9.x** | fresh install + rootfs через apk (✅ 0.9.0) |
+| **1.0.0** | mini-PC validated, stable, без tar.gz fallback |

@@ -61,7 +61,7 @@ expect {
 }
 
 send "luna version\r"
-expect -re "Luna 0\\.6\\.[0-9]+"
+expect -re "Luna 0\\.[0-9]+\\.[0-9]+"
 
 send "lsblk -dpno NAME,TYPE | grep disk\r"
 expect -re "vda"
@@ -116,7 +116,13 @@ expect {
 }
 
 send "luna version\r"
-expect -re "Luna 0\\.6\\.[0-9]+"
+expect -re "Luna 0\\.[0-9]+\\.[0-9]+"
+
+send "apk info -e luna-base\r"
+expect "luna-base"
+
+send "command -v luna\r"
+expect "/usr/bin/luna"
 
 send "poweroff\r"
 expect eof

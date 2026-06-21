@@ -37,19 +37,15 @@ if [ -f "$ROOT/build/packages.txt" ]; then
     done
 fi
 
-cp -a "$ROOT/overlay/." "$ROOTFS/"
-chmod +x "$ROOTFS"/etc/local.d/*.start 2>/dev/null || true
-chmod +x "$ROOTFS"/etc/init.d/luna-agent 2>/dev/null || true
-chmod +x "$ROOTFS"/usr/local/bin/* 2>/dev/null || true
-chmod +x "$ROOTFS"/usr/share/luna/*.sh 2>/dev/null || true
+# shellcheck source=scripts/overlay-infra.sh
+. "$ROOT/scripts/overlay-infra.sh"
 
-LUNA_VERSION="$(grep '^LUNA_VERSION=' "$ROOT/overlay/etc/luna-release" | cut -d= -f2)"
-if [ -f "$ROOT/build/keys/luna-repo.rsa" ] && [ -x "$ROOT/scripts/build-apk-repo.sh" ]; then
-	echo "==> Bundling luna-base apk-repo (live ISO / install)"
-	apk_out="$WORKDIR/luna-apk-out"
-	mkdir -p "$apk_out" "$ROOTFS/usr/share/luna/apk-repo"
-	"$ROOT/scripts/build-apk-repo.sh" "$apk_out"
-	tar xzf "$apk_out/luna-${LUNA_VERSION}-apk-repo.tar.gz" -C "$ROOTFS/usr/share/luna/apk-repo"
+if [ -f "$ROOT/build/keys/luna-repo.rsa" ] && [ -x "$ROOT/scripts/install-luna-base-rootfs.sh" ]; then
+	chmod +x "$ROOT/scripts/install-luna-base-rootfs.sh" "$ROOT/scripts/build-apk-repo.sh"
+	"$ROOT/scripts/install-luna-base-rootfs.sh" "$ROOTFS" "$WORKDIR"
+else
+	echo "==> No luna-repo key — full overlay fallback (dev only)"
+	apply_overlay_userspace_fallback "$ROOTFS" "$ROOT/overlay"
 fi
 
 # busybox mdev: @ надёжнее */path (иначе «persistent-storage: not found» при coldplug)

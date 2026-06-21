@@ -240,7 +240,7 @@ luna_self_update() {
 			printf '  Luna:     updated to %s (luna-base apk)\n\n' "$latest_ver"
 			return 0
 		fi
-		printf '  note:     luna-base apk failed — trying userspace bundle\n'
+		printf '  note:     luna-base apk failed — trying legacy userspace bundle (deprecated)\n'
 	fi
 
 	if ! url="$(github_userspace_url "$tag")"; then

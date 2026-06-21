@@ -2,6 +2,19 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.0] — 2026-06-21
+
+### Added
+
+- **Фаза 4 apk-repo:** rootfs через `apk add luna-base` (`install-luna-base-rootfs.sh`), infra-only overlay
+- **Fresh install:** `luna install` → `luna-base` из bundled repo, `/usr/bin/luna`
+- **E2E:** `test-install-qemu.sh` проверяет `luna-base` + `/usr/bin/luna` после reboot
+
+### Changed
+
+- **Releases:** убран `userspace.tar.gz` — только ISO + `apk-repo.tar.gz`
+- **`luna self-update`:** userspace tar.gz — deprecated fallback
+
 ## [0.8.10] — 2026-06-21
 
 ### Fixed
