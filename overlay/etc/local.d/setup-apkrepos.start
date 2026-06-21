@@ -26,7 +26,10 @@ https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
 EOF
 fi
 
-if command -v luna_apk_repo_present >/dev/null 2>&1 && luna_apk_repo_present; then
+if command -v luna_apk_repo_present >/dev/null 2>&1; then
+	if ! luna_apk_repo_present && luna_apk_repo_bundled_present; then
+		install_bundled_luna_apk_repo 2>/dev/null || true
+	fi
 	ensure_luna_apk_repo_in_repositories
 fi
 

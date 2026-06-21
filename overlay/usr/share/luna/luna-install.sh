@@ -179,9 +179,20 @@ confirm_install() {
 	esac
 }
 
-prepare_setup_alpine_world() {
-	# setup-alpine mirrors live /etc/apk/world into the target; luna-base is not on CDN.
+prepare_setup_alpine() {
+	local repo_sh="${LUNA_SHARE:-/usr/share/luna}/luna-apk-repo.sh"
+	# setup-* scripts run apk on live; luna-base is not on CDN.
+	if [ -r "$repo_sh" ]; then
+		# shellcheck disable=SC1091
+		. "$repo_sh"
+		if ! luna_apk_repo_present 2>/dev/null; then
+			install_bundled_luna_apk_repo 2>/dev/null || true
+		fi
+		ensure_luna_apk_repo_in_repositories 2>/dev/null || true
+	fi
 	sed -i '/^luna-base$/d' /etc/apk/world 2>/dev/null || true
+	sed -i '/^luna-base$/d' /var/lib/apk/world 2>/dev/null || true
+	apk update --quiet 2>/dev/null || true
 }
 
 write_answer_file() {
@@ -421,7 +432,7 @@ run_install() {
 	local disk="$1" hostname="$2" root_pass="$3" luna_pass="$4"
 
 	write_answer_file "$disk" "$hostname"
-	prepare_setup_alpine_world
+	prepare_setup_alpine
 
 	{
 		echo "DISK=$disk"

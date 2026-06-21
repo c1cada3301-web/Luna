@@ -2,6 +2,13 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.3] — 2026-06-21
+
+### Fixed
+
+- **Live boot:** `setup-apkrepos.start` копирует bundled repo в `/var/lib/luna/apk-repo` — apk на live может резолвить `luna-base` без CDN
+- **`luna install`:** перед `setup-alpine` — bundled repo + очистка world (`/etc/apk/world`, `/var/lib/apk/world`) + `apk update`
+
 ## [0.9.2] — 2026-06-21
 
 ### Fixed
