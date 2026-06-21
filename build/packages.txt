@@ -9,6 +9,7 @@ vim
 sudo
 openssh
 e2fsprogs
+util-linux
 htop
 mc
 # locale / timezone / keyboard (setup-timezone, setup-keymap — alpine-conf)

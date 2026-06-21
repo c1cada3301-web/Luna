@@ -1,0 +1,4 @@
+# Extra packages for disk install (bare metal profile)
+# Applied in luna install post-install chroot. Live ISO unchanged.
+
+linux-firmware

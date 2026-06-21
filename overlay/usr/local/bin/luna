@@ -47,6 +47,23 @@ _agent_state() {
 	fi
 }
 
+_boot_mode() {
+	if [ -f /etc/luna-release ]; then
+		# shellcheck disable=SC1091
+		. /etc/luna-release
+		if [ "${LUNA_MODE:-}" = "installed" ]; then
+			echo "installed (disk)"
+			return
+		fi
+	fi
+	local fstype
+	fstype="$(findmnt -no FSTYPE / 2>/dev/null || true)"
+	case "$fstype" in
+		tmpfs|overlay|aufs) echo "live (ISO)" ;;
+		*) echo "installed (disk)" ;;
+	esac
+}
+
 cmd_status() {
 	load_release
 	hostname="$(hostname 2>/dev/null || echo luna)"
@@ -55,6 +72,7 @@ cmd_status() {
 	uptime_m=$(( (uptime_s % 3600) / 60 ))
 
 	printf '🌙 Luna %s · %s · %dh %dm\n' "${LUNA_VERSION:-?}" "$hostname" "$uptime_h" "$uptime_m"
+	printf '  boot:     %s\n' "$(_boot_mode)"
 	printf '  memory:   '
 	free -h 2>/dev/null | awk '/^Mem:/ { print $3 " used / " $2 " total" }' || echo "n/a"
 	printf '  network:\n'
@@ -104,6 +122,8 @@ Commands:
   version, -v     show Luna version
   status          system overview (network, persist, services)
   think [sec]     moon phase animation (agent preview, default 5s)
+  install         install Luna to disk (live ISO only, root)
+  upgrade         update system packages (apk upgrade, root)
   help, -h        this message
   tui             simple interactive menu
 
@@ -112,6 +132,95 @@ Legacy: luna-help (same as luna help)
 Agent stub: rc-service luna-agent start|stop|status
 SSH (NAT):  ssh -p 2222 luna@127.0.0.1
 EOF
+}
+
+cmd_install() {
+	if [ "$(id -u)" -ne 0 ]; then
+		echo "luna install requires root — run: sudo luna install" >&2
+		exit 1
+	fi
+	if ! command -v bash >/dev/null 2>&1; then
+		echo "luna install requires bash" >&2
+		exit 1
+	fi
+	exec bash "$LUNA_SHARE/luna-install.sh"
+}
+
+_ensure_cdn_repos() {
+	if [ -f /etc/apk/repositories ] && grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories; then
+		# Убрать дубли http/https
+		if grep -q '^http:' /etc/apk/repositories 2>/dev/null; then
+			# shellcheck disable=SC1091
+			. /etc/os-release 2>/dev/null || VERSION_ID=3.20
+			local ver="${VERSION_ID%%.*}"
+			cat > /etc/apk/repositories <<EOF
+https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
+https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
+EOF
+		fi
+		return 0
+	fi
+	# shellcheck disable=SC1091
+	. /etc/os-release 2>/dev/null || VERSION_ID=3.20
+	local ver="${VERSION_ID%%.*}"
+	cat > /etc/apk/repositories <<EOF
+https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
+https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
+EOF
+	printf '  apk repos:     switched to CDN Alpine v%s\n' "$ver"
+}
+
+cmd_upgrade() {
+	if [ "$(id -u)" -ne 0 ]; then
+		echo "luna upgrade requires root — run: sudo luna upgrade" >&2
+		exit 1
+	fi
+	if ! command -v apk >/dev/null 2>&1; then
+		echo "luna upgrade: apk not found" >&2
+		exit 1
+	fi
+
+	load_release
+	ver_before="${LUNA_VERSION:-unknown}"
+	boot="$(_boot_mode)"
+	kernel_before="$(uname -r)"
+
+	printf '🌙 Luna upgrade\n\n'
+	printf '  Luna release:  %s\n' "$ver_before"
+	printf '  boot:          %s\n' "$boot"
+	printf '  kernel:        %s\n\n' "$kernel_before"
+
+	if [ "$boot" = "live (ISO)" ]; then
+		printf 'Note: live ISO — apk upgrades are lost after reboot.\n'
+		printf '      Install to disk: sudo luna install\n\n'
+	fi
+
+	_ensure_cdn_repos
+
+	printf 'Updating package index...\n'
+	apk update || exit 1
+
+	printf 'Upgrading packages...\n'
+	apk upgrade || exit 1
+
+	load_release
+	ver_after="${LUNA_VERSION:-unknown}"
+	kernel_after="$(uname -r)"
+	pkg_count="$(apk info -I 2>/dev/null | wc -l | tr -d ' ')"
+
+	printf '\n🌙 Upgrade complete\n'
+	printf '  Luna release:  %s' "$ver_before"
+	if [ "$ver_before" != "$ver_after" ]; then
+		printf ' → %s' "$ver_after"
+	fi
+	printf '\n'
+	printf '  packages:      %s installed\n' "$pkg_count"
+	printf '  note:          Luna release = ISO version; use new ISO/scp for Luna OS updates\n'
+	if [ "$kernel_before" != "$kernel_after" ]; then
+		printf '  kernel:        %s → %s (reboot recommended)\n' "$kernel_before" "$kernel_after"
+	elif apk info -e linux-virt linux-lts 2>/dev/null | grep -q .; then
+		printf '  tip:           reboot if kernel packages were upgraded\n'
+	fi
 }
 
 cmd_tui() {
@@ -128,6 +237,8 @@ main() {
 		status)               cmd_status ;;
 		help|-h|--help)       cmd_help ;;
 		think)                cmd_think "${2:-5}" ;;
+		install)              cmd_install ;;
+		upgrade)              cmd_upgrade ;;
 		tui|menu)             cmd_tui ;;
 		"")                   cmd_welcome ;;
 		*)

@@ -2,6 +2,83 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+### Verified
+
+- VirtualBox ARM64: `luna install` → reboot с `/dev/sda3` → `luna status` (`boot: installed (disk)`)
+
+## [0.8.0] — 2026-06-21
+
+### Added
+
+- **Bare-metal install profile:** `setup-disk -k lts`, post-install `linux-firmware`
+- `usr/share/luna/packages-install.txt` — extra packages на диск
+- [docs/luna-base.md](docs/luna-base.md) — live vs install, `LUNA_INSTALL_KERNEL`
+- README: установка на mini-PC (USB, EFI, типичные ошибки)
+
+### Changed
+
+- Фаза **5.3** (bare metal); фаза 4 LLM — отложена
+- `luna upgrade`: пояснение Luna release vs Alpine packages; dedupe http repos
+
+### Verified
+
+- 5.2: VirtualBox install, SSH, python3 persist, `luna upgrade`, scp → 0.7.0
+
+## [0.7.0] — 2026-06-21
+
+### Added
+
+- **`luna upgrade`** — `apk update` + `apk upgrade`, CDN repos, версия Luna до/после
+- Предупреждение на live ISO: апдейты не сохраняются после reboot
+- Пункт «Upgrade (root)» в `luna tui`
+
+### Changed
+
+- Фаза **5.2** (lifecycle): первый шаг — upgrade с диска
+
+## [0.6.4] — 2026-06-21
+
+### Fixed
+
+- **post-install**: пароли через temp-файлы — `chpasswd: missing new password` при `$`, `:`, `\` в пароле
+- Проверка: оба пароля непустые до установки
+
+## [0.6.3] — 2026-06-21
+
+### Fixed
+
+- **post-install**: `passwd -stdin` не существует в Alpine → `chpasswd`
+- **post-install**: копирование `/usr/local/bin/luna` и `/usr/share/luna` на диск (lbu их не включает)
+
+## [0.6.2] — 2026-06-21
+
+### Fixed
+
+- **`luna install`**: `dev: unbound variable` — bash `local dev=... ${dev#...}` на одной строке с `set -u`
+- Сообщение «no disks» показывает `/sys/block` для диагностики
+
+## [0.6.1] — 2026-06-21
+
+### Fixed
+
+- **`luna install`**: `lsblk` not found — добавлен `util-linux`, авто `apk add`, fallback через `/sys/block`
+- QEMU test script: `-cpu max` вместо `cortex-a72`
+
+## [0.6.0] — 2026-06-21
+
+### Added
+
+- **`luna install`** — TUI установки на диск из live ISO (фаза 5.1)
+- `luna-install.sh`: выбор диска, hostname, пароли root/luna, обёртка `setup-alpine`
+- Post-install: CDN `apk` repos, SSH без пустых паролей, `LUNA_MODE=installed`
+- `luna status` — строка `boot: live (ISO) | installed (disk)`
+- Пункт «Install to disk» в `luna tui`
+
+### Changed
+
+- Фаза **5** (install на диск); фаза 4 (Shell UX) продолжается параллельно
+- Login banner / MOTD: подсказка `sudo luna install`
+
 ## [0.5.0] — 2026-06-21
 
 ### Added

@@ -57,7 +57,7 @@ case "$ARCH" in
 
         qemu-system-aarch64 \
             -M virt \
-            -cpu cortex-a72 \
+            -cpu max \
             -m 1024 \
             -bios "$EFI" \
             -cdrom "$ISO" \

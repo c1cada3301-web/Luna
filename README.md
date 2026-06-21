@@ -4,15 +4,11 @@
 
 ## Статус
 
-**Luna 0.5.0 — фаза 4 (Luna Shell UX)** (июнь 2026)
+**Luna 0.8.0 — фаза 5.3 (bare metal)** (июнь 2026)
 
-- **`luna`** — welcome-screen с 🌙 (Claude-style card)
-- **`luna think`** — анимация фаз луны (preview agent)
-- CLI: version, status, help, tui · OpenRC **`luna-agent`** stub
-- Брендинг: login banner, MOTD, bash-prompt
-- Сеть (DHCP), online `apk add`, curl/git/vim/htop/mc
-- Пользователи `root` и `luna` (sudo), SSH
-- Опциональный persist-диск (`LUNA_DATA` → `/mnt/persist`)
+- **`luna install`** → **linux-lts** + **linux-firmware** на диск (live ISO остаётся virt)
+- **`luna upgrade`** — Alpine-пакеты; Luna release — через ISO/scp
+- Проверено: VirtualBox ARM64 install → SSH → `apk add` persist → 0.7.0
 
 ## Быстрый старт
 
@@ -37,14 +33,14 @@ docker compose run --rm luna-build-x86_64    # QEMU / Intel
 
 | ISO | Архитектура | Тест |
 |-----|-------------|------|
-| `out/luna-0.5.0-aarch64.iso` (~112 MB) | ARM64 | VirtualBox: **ARM 64-bit, EFI ON** |
-| `out/luna-0.5.0-x86_64.iso` | x86_64 | QEMU, VirtualBox Intel |
+| `out/luna-0.8.0-aarch64.iso` (~108 MB) | ARM64 | VirtualBox / mini-PC **ARM 64-bit, EFI ON** |
+| `out/luna-0.8.0-x86_64.iso` | x86_64 | QEMU, VirtualBox Intel, NUC |
 
 ### 3. VirtualBox (Apple Silicon)
 
 1. Other Linux **(ARM 64-bit)**, EFI **ON**, RAM **1024–2048 MB**
 2. Network → Adapter 1 → **NAT**
-3. ISO → `out/luna-0.5.0-aarch64.iso`
+3. ISO → `out/luna-0.8.0-aarch64.iso`
 
 **Вход:** `luna` или `root`, пароль **пустой** (Enter). Затем **`luna`** — welcome-screen.
 
@@ -61,11 +57,35 @@ luna                    # welcome-screen 🌙
 luna status
 luna think 5            # animation demo
 luna help
+sudo luna install       # install to virtual disk (add SATA disk ≥8 GB first)
+sudo luna upgrade       # update packages (installed system)
 ```
 
 Prompt: `◐ luna:~$` (фиолетово-синий).
 
-### 6. QEMU
+### 6. Установка на диск (VirtualBox)
+
+1. VM выключена → Settings → Storage → **SATA disk** (VDI, ≥8 GB) — один раз
+2. Boot с ISO → `sudo luna install` → пароли root/luna
+3. Отключить ISO → reboot → `luna status` (`boot: installed (disk)`)
+
+На диск ставится **linux-lts** + firmware (для mini-PC). Только VM: `LUNA_INSTALL_KERNEL=virt sudo luna install`.
+
+### 7. Mini-PC / bare metal (aarch64 или x86_64)
+
+1. Записать `out/luna-0.8.0-*.iso` на USB (Balena Etcher, `dd`)
+2. Boot с USB, **UEFI ON**, Secure Boot **OFF** (если не грузится)
+3. Ethernet или Wi‑Fi после install — DHCP через `network-dhcp.start`
+4. `sudo luna install` → выбрать внутренний NVMe/SATA (не USB-флешку!)
+5. Reboot без USB → login → `luna status`
+
+**SSH с Mac по LAN:** узнай IP (`ip addr`), `ssh luna@<ip>`.
+
+Типичные проблемы: нет EFI → включить в BIOS; выбрал флешку вместо диска; Secure Boot блокирует GRUB.
+
+Пакеты live vs install: [docs/luna-base.md](docs/luna-base.md).
+
+### 8. QEMU
 
 ```bash
 ./scripts/test-qemu.sh aarch64
@@ -91,7 +111,7 @@ Luna/
 
 ## Документация
 
-[Roadmap](docs/roadmap.md) · [Changelog](CHANGELOG.md)
+[Roadmap](docs/roadmap.md) · [Changelog](CHANGELOG.md) · [Package profiles](docs/luna-base.md)
 
 ## Ограничения
 

@@ -39,7 +39,7 @@ printf '%s\n' '│                   • setup-keymap ru — keyboard after logi
 printf '%s\n' '│                                                                      │'
 printf '%s\n' '│                   What'"'"'s new                                         │'
 printf '%s\n' '│                   • Agent stub: rc-service luna-agent status         │'
-printf '%s\n' '│                   • Persist: mkfs.ext4 -L LUNA_DATA /dev/sdX         │'
+printf '%s\n' '│                   • luna install — disk install (live ISO, sudo)       │'
 printf '%s\n' '│                   • SSH: port forward 2222→22 (NAT, JetBrains Mono)  │'
 printf '%s\n' '│                                                                      │'
 printf '%s\n' '└──────────────────────────────────────────────────────────────────────┘'
