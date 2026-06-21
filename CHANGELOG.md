@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.8] — 2026-06-21
+
+### Fixed
+
+- **Rootfs extract:** APK v3 (abuild 3.x) — файлы в корне архива, без `data.tar.*`
+
 ## [0.9.7] — 2026-06-21
 
 ### Fixed

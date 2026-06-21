@@ -63,7 +63,7 @@ ensure_luna_apk_repos_live() {
 prepare_live_for_setup_alpine() {
 	ensure_luna_apk_repos_live || die "apk update failed — check /etc/apk/repositories"
 	strip_luna_base_from_world
-	luna_base_in_world && die "luna-base still in apk world — use Luna 0.9.7+ live ISO"
+	luna_base_in_world && die "luna-base still in apk world — use Luna 0.9.8+ live ISO"
 }
 
 extract_luna_apk_repo() {

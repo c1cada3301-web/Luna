@@ -23,15 +23,27 @@ LUNA_VERSION="$(grep '^LUNA_VERSION=' "$ROOT/overlay/etc/luna-release" | cut -d=
 
 extract_luna_base_apk() {
 	local apk="$1" dest="$2" tmp="$3"
+	local item base
+
 	rm -rf "$tmp"
-	mkdir -p "$tmp"
+	mkdir -p "$tmp" "$dest"
 	tar xzf "$apk" -C "$tmp"
 	if [ -f "$tmp/data.tar.gz" ]; then
 		tar xzf "$tmp/data.tar.gz" -C "$dest"
 	elif [ -f "$tmp/data.tar.zst" ]; then
 		tar --zstd -xf "$tmp/data.tar.zst" -C "$dest"
+	elif [ -d "$tmp/usr" ] || [ -d "$tmp/etc" ]; then
+		# APK v3 — payload at archive root (etc/, usr/, …)
+		for item in "$tmp"/* "$tmp"/.[!.]*; do
+			[ -e "$item" ] || continue
+			base="$(basename "$item")"
+			case "$base" in
+				.PKGINFO|.SIGN.*|CONTROL|dep|hashf) continue ;;
+			esac
+			cp -a "$item" "$dest/"
+		done
 	else
-		echo "install-luna-base-rootfs: no data.tar.gz/zst in $apk" >&2
+		echo "install-luna-base-rootfs: unknown apk layout in $apk" >&2
 		ls -la "$tmp" >&2
 		return 1
 	fi
