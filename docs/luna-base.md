@@ -38,8 +38,10 @@ sudo luna install
 | | Обновление |
 |---|-----------|
 | Alpine (`python3`, kernel, …) | `sudo luna upgrade` / `apk upgrade` |
-| Luna release (CLI, scripts, motd) | `sudo luna upgrade` — GitHub Releases `luna-*-userspace.tar.gz` |
+| Luna release (CLI, scripts, motd) | `sudo luna upgrade` — `luna-base` apk (0.8.4+) или userspace tar.gz |
 
 ## Будущее (5.4)
 
-Metapackage **luna-base** в своём apk-репозитории — один `apk upgrade luna-base` для Luna userspace.
+Metapackage **`luna-base`** в своём подписанном apk-репозитории — один `apk upgrade luna-base` для Luna userspace.
+
+**План реализации:** [luna-base-apk-repo.md](luna-base-apk-repo.md) — APKBUILD, CI, `file://` repo, интеграция в `luna upgrade`.

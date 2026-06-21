@@ -10,6 +10,8 @@ services:
     volumes:
       - ./overlay:/luna/overlay
       - ./build:/luna/build
+      - ./packages:/luna/packages
+      - ./scripts:/luna/scripts
       - ./out:/luna/out
       - ./work:/luna/work
     working_dir: /luna
@@ -26,6 +28,8 @@ services:
     volumes:
       - ./overlay:/luna/overlay
       - ./build:/luna/build
+      - ./packages:/luna/packages
+      - ./scripts:/luna/scripts
       - ./out:/luna/out
       - ./work:/luna/work
     working_dir: /luna

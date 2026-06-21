@@ -41,12 +41,12 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 | 3 | GRUB EFI aarch64 | ✅ VirtualBox |
 | 4 | Один ISO live + install | ✅ |
 
-**Milestone 5.1** — VirtualBox ARM64: install → reboot → `luna status`.
+**Milestone 5.1** — VirtualBox ARM64 + x86_64 VM: install → reboot → `luna status`; E2E `test-install-qemu.sh`.
 
 | # | Задача | Статус |
 |---|--------|--------|
-| 5 | x86_64 install + boot | ⏳ |
-| 6 | E2E `test-install-qemu.sh` | ⏳ |
+| 5 | x86_64 install + boot | ✅ VM |
+| 6 | E2E `test-install-qemu.sh` | ✅ |
 
 ### 5.2 — Жизненный цикл ✅
 
@@ -79,7 +79,7 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 | 1 | ISO на GitHub Releases по тегу `v0.x.0` | ✅ workflow + scripts |
 | 2 | CHANGELOG + bump `luna-release` в одном ритуале | ✅ `scripts/release.sh` |
 | 3 | Канал **stable** (latest release) | ✅ `gh release --latest` |
-| 4 | apk-репо `luna-base` | ⏳ |
+| 4 | apk-репо `luna-base` | ⏳ фаза 1 ✅ [план](luna-base-apk-repo.md) · runtime фаза 3 |
 
 **Milestone 5.4:** Luna 1.0.0 — Releases, upgrade, bare metal.
 
@@ -97,9 +97,8 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 
 ## Что дальше
 
-1. **Опубликовать `v0.8.0`** — commit workflow → `./scripts/release.sh --push`
-2. **Mini-PC** smoke-test (5.3.4)
-3. **x86_64** install+boot в VM
+1. **Mini-PC** smoke-test (5.3.4)
+2. **apk-репо `luna-base`** (5.4.4)
 
 ### Горизонт
 

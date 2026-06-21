@@ -1,3 +1,4 @@
 work/
 out/
 build/keys/luna-repo.rsa
+build/keys/luna-repo.rsa.pub

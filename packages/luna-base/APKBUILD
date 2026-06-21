@@ -1,0 +1,50 @@
+# Maintainer: Luna <luna@example.com>
+# Luna userspace — built from overlay/ (pkgver patched by scripts/build-apk-repo.sh)
+pkgname=luna-base
+pkgver=0.8.4
+pkgrel=0
+pkgdesc="Luna OS userspace (CLI, scripts, branding)"
+url="https://github.com/c1cada3301-web/Luna"
+arch="noarch"
+license="MIT"
+# bash always present on Luna; omit depends — else apk index drops pkg from local repo
+options="!strip !check"
+
+package() {
+	local overlay="${OVERLAY_ROOT:-$startdir/../../overlay}"
+	local rel dest src
+
+	if [ ! -d "$overlay/usr/share/luna" ]; then
+		echo "OVERLAY_ROOT=$overlay not found — set OVERLAY_ROOT or run from repo" >&2
+		return 1
+	fi
+
+	# Alpine packages must not use /usr/local — use /usr/bin (same as PATH on Luna)
+	install -D -m755 "$overlay/usr/local/bin/luna" "$pkgdir/usr/bin/luna"
+	install -D -m755 "$overlay/usr/local/bin/luna-help" "$pkgdir/usr/bin/luna-help"
+
+	mkdir -p "$pkgdir/usr/share"
+	cp -a "$overlay/usr/share/luna" "$pkgdir/usr/share/"
+
+	for rel in \
+		etc/profile.d/luna-prompt.sh \
+		etc/profile.d/luna-locale.sh \
+		etc/init.d/luna-agent \
+		etc/local.d/network-dhcp.start \
+		etc/local.d/setup-apkrepos.start \
+		etc/local.d/mount-persist.start \
+		etc/luna/locale.conf \
+		etc/luna-release \
+		etc/motd \
+		etc/issue
+	do
+		src="$overlay/$rel"
+		dest="$pkgdir/$rel"
+		install -D -m644 "$src" "$dest"
+	done
+
+	chmod +x "$pkgdir"/usr/bin/luna "$pkgdir"/usr/bin/luna-help
+	chmod +x "$pkgdir"/usr/share/luna/*.sh 2>/dev/null || true
+	chmod +x "$pkgdir"/etc/local.d/*.start 2>/dev/null || true
+	chmod +x "$pkgdir"/etc/init.d/luna-agent 2>/dev/null || true
+}

@@ -214,11 +214,11 @@ cmd_upgrade() {
 		printf '      Install to disk: sudo luna install\n\n'
 	fi
 
+	_ensure_cdn_repos
+
 	if command -v bash >/dev/null 2>&1 && [ -x "$LUNA_SHARE/luna-self-update.sh" ]; then
 		bash "$LUNA_SHARE/luna-self-update.sh" || true
 	fi
-
-	_ensure_cdn_repos
 
 	printf 'Updating Alpine package index...\n'
 	apk update || exit 1

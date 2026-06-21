@@ -2,6 +2,19 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.4] — 2026-06-21
+
+### Added
+
+- **`luna-base`** metapackage: `packages/luna-base/APKBUILD`, `scripts/build-apk-repo.sh`
+- Release asset `luna-*-apk-repo.tar.gz` (CI + Docker build)
+- **`luna upgrade` / self-update:** prefer `luna-base` apk from GitHub; fallback userspace tar.gz
+
+### Changed
+
+- `luna upgrade`: CDN repos before Luna self-update
+- [docs/luna-base-apk-repo.md](docs/luna-base-apk-repo.md) — plan + фаза 1
+
 ## [0.8.3] — 2026-06-21
 
 ### Fixed

@@ -110,6 +110,34 @@ github_userspace_url() {
 	printf '%s' "$url"
 }
 
+github_apk_repo_url() {
+	local tag="$1"
+	local ver api json url want
+
+	ver="$(strip_v "$tag")"
+	want="luna-${ver}-apk-repo.tar.gz"
+	api="https://api.github.com/repos/${LUNA_GITHUB_REPO}/releases/tags/${tag}"
+
+	if ! json="$(github_curl "$api" 2>/dev/null)"; then
+		echo "failed to fetch release $tag" >&2
+		return 1
+	fi
+
+	url="$(json_asset_download_url "$json" "$want")"
+	[ -n "$url" ] || return 1
+	printf '%s' "$url"
+}
+
+installed_luna_ver() {
+	local pkg
+	load_release
+	if pkg="$(apk info -e luna-base 2>/dev/null)" && [ -n "$pkg" ]; then
+		printf '%s' "$pkg" | sed 's/^luna-base-//; s/-r[0-9]*$//'
+		return 0
+	fi
+	printf '%s' "${LUNA_VERSION:-0.0.0}"
+}
+
 preserve_installed_mode() {
 	local mode
 	mode="$(grep '^LUNA_MODE=' /etc/luna-release 2>/dev/null | cut -d= -f2 || true)"
@@ -124,9 +152,37 @@ preserve_installed_mode() {
 
 fix_permissions() {
 	chmod +x /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
+	chmod +x /usr/bin/luna /usr/bin/luna-help 2>/dev/null || true
 	chmod +x /usr/share/luna/*.sh 2>/dev/null || true
 	chmod +x /etc/local.d/*.start 2>/dev/null || true
 	chmod +x /etc/init.d/luna-agent 2>/dev/null || true
+}
+
+apply_luna_base_apk() {
+	local url="$1" tmpdir apk
+
+	if ! command -v apk >/dev/null 2>&1; then
+		echo "apk not found" >&2
+		return 1
+	fi
+
+	tmpdir="$(mktemp -d)"
+	trap 'rm -rf "$tmpdir"' RETURN
+
+	printf '  downloading %s\n' "$(basename "$url")"
+	github_download "$url" "$tmpdir/apk-repo.tar.gz"
+
+	mkdir -p /var/lib/luna/apk-repo
+	rm -rf /var/lib/luna/apk-repo/*
+	tar xzf "$tmpdir/apk-repo.tar.gz" -C /var/lib/luna/apk-repo
+
+	apk="$(find /var/lib/luna/apk-repo/noarch -name 'luna-base-*.apk' -print -quit 2>/dev/null || true)"
+	[ -n "$apk" ] || { echo "apk-repo tarball has no luna-base package" >&2; return 1; }
+
+	printf '  installing %s\n' "$(basename "$apk")"
+	apk add --force-overwrite --allow-untrusted "$apk"
+	preserve_installed_mode
+	fix_permissions
 }
 
 apply_userspace() {
@@ -164,7 +220,7 @@ luna_self_update() {
 
 	load_release
 	load_github_config
-	current="${LUNA_VERSION:-0.0.0}"
+	current="$(installed_luna_ver)"
 
 	printf 'Checking Luna release (GitHub: %s)...\n' "$LUNA_GITHUB_REPO"
 
@@ -187,14 +243,23 @@ luna_self_update() {
 		return 1
 	fi
 
+	printf '\nUpdating Luna %s → %s\n' "$current" "$latest_ver"
+
+	if url="$(github_apk_repo_url "$tag" 2>/dev/null)" && [ -n "$url" ]; then
+		if apply_luna_base_apk "$url"; then
+			printf '  Luna:     updated to %s (luna-base apk)\n\n' "$latest_ver"
+			return 0
+		fi
+		printf '  note:     luna-base apk failed — trying userspace bundle\n'
+	fi
+
 	if ! url="$(github_userspace_url "$tag")"; then
 		printf '  skip: no userspace bundle on %s — Alpine upgrade only\n\n' "$tag"
 		return 2
 	fi
 
-	printf '\nUpdating Luna userspace %s → %s\n' "$current" "$latest_ver"
 	apply_userspace "$url"
-	printf '  Luna:     updated to %s\n\n' "$latest_ver"
+	printf '  Luna:     updated to %s (userspace tar.gz)\n\n' "$latest_ver"
 	return 0
 }
 
