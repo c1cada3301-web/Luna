@@ -1,7 +1,0 @@
-# Luna — glyph
-
-  🌙  welcome · login · status
-  ◐   prompt (PS1)
-  🌙 ◐ ◑ ◒  agent thinking (мигание)
-
-  Макет: docs/luna-shell-tui-sketch.txt

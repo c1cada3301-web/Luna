@@ -91,17 +91,7 @@ Luna/
 
 ## Документация
 
-| Документ | О чём |
-|----------|--------|
-| [Roadmap](docs/roadmap.md) | Фазы 0–4 |
-| [Luna CLI](docs/luna-cli.md) | `luna version`, `status`, `tui` |
-| [Пакеты по умолчанию](docs/default-packages.md) | Состав образа 0.5.0 |
-| [UI без GNOME](docs/ui-strategy.md) | Terminal, Wayland, Luna Shell |
-| [Changelog](CHANGELOG.md) | История версий |
-| [Документация](docs/README.md) | Индекс всех docs |
-| [Архитектура](docs/architecture.md) | Boot, dual-arch, apk |
-| [Milestone 0](docs/milestone-0.md) | Первый ISO |
-| [Окружение](docs/development-environment.md) | Mac, Docker, VM |
+[Roadmap](docs/roadmap.md) · [Changelog](CHANGELOG.md)
 
 ## Ограничения
 

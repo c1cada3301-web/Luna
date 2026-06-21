@@ -38,4 +38,4 @@ Persist disk (optional)
 Agent (stub)
   rc-service luna-agent start|stop|status
 
-Docs on build host: docs/luna-cli.md, docs/luna-shell-tui-sketch.txt
+Docs on build host: README.md, docs/roadmap.md
