@@ -26,7 +26,15 @@ extract_luna_base_apk() {
 	rm -rf "$tmp"
 	mkdir -p "$tmp"
 	tar xzf "$apk" -C "$tmp"
-	tar xzf "$tmp/data.tar.gz" -C "$dest"
+	if [ -f "$tmp/data.tar.gz" ]; then
+		tar xzf "$tmp/data.tar.gz" -C "$dest"
+	elif [ -f "$tmp/data.tar.zst" ]; then
+		tar --zstd -xf "$tmp/data.tar.zst" -C "$dest"
+	else
+		echo "install-luna-base-rootfs: no data.tar.gz/zst in $apk" >&2
+		ls -la "$tmp" >&2
+		return 1
+	fi
 	rm -rf "$tmp"
 }
 

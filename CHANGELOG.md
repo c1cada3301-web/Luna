@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.7] — 2026-06-21
+
+### Fixed
+
+- **Rootfs extract:** Alpine 3.20 apk uses `data.tar.zst` (not `.gz`) — сборка ISO падала
+
 ## [0.9.6] — 2026-06-21
 
 ### Fixed
