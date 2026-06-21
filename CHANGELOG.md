@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.2] — 2026-06-21
+
+### Fixed
+
+- **`luna install`:** `luna-base` в `/etc/apk/world` на live — setup-alpine пытался ставить пакет с CDN на каждом шаге (`no such package: luna-base`). Файлы остаются на ISO; world очищается при сборке rootfs и перед `setup-alpine`.
+
 ## [0.9.1] — 2026-06-21
 
 ### Fixed

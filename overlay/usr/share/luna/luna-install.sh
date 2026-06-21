@@ -179,6 +179,11 @@ confirm_install() {
 	esac
 }
 
+prepare_setup_alpine_world() {
+	# setup-alpine mirrors live /etc/apk/world into the target; luna-base is not on CDN.
+	sed -i '/^luna-base$/d' /etc/apk/world 2>/dev/null || true
+}
+
 write_answer_file() {
 	local disk="$1" hostname="$2"
 	local kernel="${LUNA_INSTALL_KERNEL:-lts}"
@@ -416,6 +421,7 @@ run_install() {
 	local disk="$1" hostname="$2" root_pass="$3" luna_pass="$4"
 
 	write_answer_file "$disk" "$hostname"
+	prepare_setup_alpine_world
 
 	{
 		echo "DISK=$disk"
