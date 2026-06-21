@@ -251,6 +251,14 @@ umount_sysroot() {
 	umount "$SYSROOT" 2>/dev/null || true
 }
 
+install_luna_apk_repo_bundle() {
+	if [ ! -d /usr/share/luna/apk-repo/noarch ]; then
+		return 1
+	fi
+	mkdir -p "$SYSROOT/var/lib/luna/apk-repo"
+	cp -a /usr/share/luna/apk-repo/. "$SYSROOT/var/lib/luna/apk-repo/"
+}
+
 # setup-alpine/lbu не включает /usr/local — копируем Luna userspace с live overlay
 install_luna_overlay() {
 	local src dst rel
@@ -298,6 +306,7 @@ post_install() {
 
 	mount_sysroot "$disk"
 	install_luna_overlay
+	install_luna_apk_repo_bundle || true
 
 	# Пароли через файлы — heredoc ломает $, :, \ в паролях
 	printf '%s' "$root_pass" > "$SYSROOT/tmp/.luna-pass-root"
@@ -339,6 +348,18 @@ cat > /etc/apk/repositories <<REPOS
 https://dl-cdn.alpinelinux.org/alpine/v\${ver}/main
 https://dl-cdn.alpinelinux.org/alpine/v\${ver}/community
 REPOS
+
+if ls /var/lib/luna/apk-repo/noarch/luna-base-*.apk >/dev/null 2>&1; then
+	grep -qxF /var/lib/luna/apk-repo /etc/apk/repositories 2>/dev/null || \
+		echo /var/lib/luna/apk-repo >> /etc/apk/repositories
+	apk update
+	if apk add --force-overwrite luna-base 2>/dev/null; then
+		:
+	elif apk add --force-overwrite --allow-untrusted /var/lib/luna/apk-repo/noarch/luna-base-*.apk; then
+		:
+	fi
+	rm -f /usr/local/bin/luna /usr/local/bin/luna-help
+fi
 
 if [ -f /etc/luna-release ]; then
 	grep -q '^LUNA_MODE=' /etc/luna-release && \

@@ -6,6 +6,9 @@ set -euo pipefail
 
 LUNA_SHARE="${LUNA_SHARE:-/usr/share/luna}"
 
+# shellcheck disable=SC1091
+. "$LUNA_SHARE/luna-apk-repo.sh"
+
 load_release() {
 	if [ -r /etc/luna-release ]; then
 		# shellcheck disable=SC1091
@@ -138,68 +141,28 @@ installed_luna_ver() {
 	printf '%s' "${LUNA_VERSION:-0.0.0}"
 }
 
-preserve_installed_mode() {
-	local mode="$1"
-	if [ "$mode" = "installed" ]; then
-		if grep -q '^LUNA_MODE=' /etc/luna-release; then
-			sed -i 's/^LUNA_MODE=.*/LUNA_MODE=installed/' /etc/luna-release
-		else
-			printf '\nLUNA_MODE=installed\n' >> /etc/luna-release
-		fi
-	fi
-}
-
-sync_luna_release_version() {
-	local ver
-	ver="$(apk info -e luna-base 2>/dev/null | sed 's/^luna-base-//; s/-r[0-9]*$//')"
-	[ -n "$ver" ] || return 0
-	if [ -f /etc/luna-release ] && grep -q '^LUNA_VERSION=' /etc/luna-release; then
-		sed -i "s/^LUNA_VERSION=.*/LUNA_VERSION=${ver}/" /etc/luna-release
-	fi
-}
-
-remove_tarball_luna_bins() {
-	# tar.gz userspace installs here; apk uses /usr/bin — drop stale copies from PATH
-	rm -f /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
-}
-
-fix_permissions() {
-	remove_tarball_luna_bins
-	chmod +x /usr/bin/luna /usr/bin/luna-help 2>/dev/null || true
-	chmod +x /usr/share/luna/*.sh 2>/dev/null || true
-	chmod +x /etc/local.d/*.start 2>/dev/null || true
-	chmod +x /etc/init.d/luna-agent 2>/dev/null || true
-}
-
 apply_luna_base_apk() {
-	local url="$1" tmpdir apk luna_mode
+	local url="$1" tmpdir
 
 	if ! command -v apk >/dev/null 2>&1; then
 		echo "apk not found" >&2
 		return 1
 	fi
 
-	luna_mode="$(grep '^LUNA_MODE=' /etc/luna-release 2>/dev/null | cut -d= -f2 || true)"
-
 	tmpdir="$(mktemp -d)"
-	# Literal path in trap — local tmpdir is unset before RETURN trap runs (set -u)
 	trap "rm -rf '$tmpdir'" RETURN
 
 	printf '  downloading %s\n' "$(basename "$url")"
 	github_download "$url" "$tmpdir/apk-repo.tar.gz"
 
-	mkdir -p /var/lib/luna/apk-repo
-	rm -rf /var/lib/luna/apk-repo/*
-	tar xzf "$tmpdir/apk-repo.tar.gz" -C /var/lib/luna/apk-repo
+	extract_luna_apk_repo "$tmpdir/apk-repo.tar.gz" || {
+		echo "failed to extract apk-repo tarball" >&2
+		return 1
+	}
 
-	apk="$(find /var/lib/luna/apk-repo/noarch -name 'luna-base-*.apk' -print -quit 2>/dev/null || true)"
-	[ -n "$apk" ] || { echo "apk-repo tarball has no luna-base package" >&2; return 1; }
+	printf '  upgrading luna-base (local apk repo)\n'
+	upgrade_luna_base_from_repo
 
-	printf '  installing %s\n' "$(basename "$apk")"
-	apk add --force-overwrite --allow-untrusted "$apk"
-	sync_luna_release_version
-	preserve_installed_mode "$luna_mode"
-	fix_permissions
 	trap - RETURN
 	rm -rf "$tmpdir"
 }
@@ -218,8 +181,8 @@ apply_userspace() {
 
 	printf '  extracting to /\n'
 	tar -xzf "$archive" -C /
-	preserve_installed_mode "$luna_mode"
-	fix_permissions
+	preserve_luna_installed_mode "$luna_mode"
+	luna_base_fix_permissions
 	trap - RETURN
 	rm -rf "$tmpdir"
 }

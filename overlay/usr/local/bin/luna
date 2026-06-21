@@ -5,6 +5,11 @@ set -eu
 
 LUNA_SHARE="${LUNA_SHARE:-/usr/share/luna}"
 
+if [ -r "$LUNA_SHARE/luna-apk-repo.sh" ]; then
+	# shellcheck disable=SC1091
+	. "$LUNA_SHARE/luna-apk-repo.sh"
+fi
+
 load_release() {
 	if [ -r /etc/luna-release ]; then
 		# shellcheck disable=SC1091
@@ -164,13 +169,22 @@ _alpine_repo_ver() {
 }
 
 _ensure_cdn_repos() {
-	local ver
+	local ver luna_line
 	ver="$(_alpine_repo_ver)"
 
+	luna_line=""
+	if [ -f /etc/apk/repositories ]; then
+		luna_line="$(grep '^/var/lib/luna/apk-repo$' /etc/apk/repositories 2>/dev/null | head -1 || true)"
+	fi
+
 	if [ -f /etc/apk/repositories ] && grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories; then
-		# Уже CDN с правильной версией — не трогаем
 		if ! grep -q '^http:' /etc/apk/repositories 2>/dev/null && \
 			grep -q "alpine/v${ver}/" /etc/apk/repositories 2>/dev/null; then
+			if command -v luna_apk_repo_present >/dev/null 2>&1 && \
+				luna_apk_repo_present && \
+				! grep -qxF "/var/lib/luna/apk-repo" /etc/apk/repositories 2>/dev/null; then
+				ensure_luna_apk_repo_in_repositories
+			fi
 			return 0
 		fi
 	fi
@@ -179,6 +193,11 @@ _ensure_cdn_repos() {
 https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
 https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
 EOF
+	if command -v luna_apk_repo_present >/dev/null 2>&1 && luna_apk_repo_present; then
+		ensure_luna_apk_repo_in_repositories
+	elif [ -n "$luna_line" ]; then
+		printf '%s\n' "$luna_line" >> /etc/apk/repositories
+	fi
 	printf '  apk repos:     switched to CDN Alpine v%s\n' "$ver"
 }
 
@@ -226,6 +245,10 @@ cmd_upgrade() {
 
 	if command -v bash >/dev/null 2>&1 && [ -x "$LUNA_SHARE/luna-self-update.sh" ]; then
 		bash "$LUNA_SHARE/luna-self-update.sh" || true
+	fi
+
+	if command -v luna_apk_repo_present >/dev/null 2>&1 && luna_apk_repo_present; then
+		ensure_luna_apk_repo_in_repositories
 	fi
 
 	printf 'Updating Alpine package index...\n'

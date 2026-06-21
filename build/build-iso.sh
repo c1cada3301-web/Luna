@@ -42,7 +42,7 @@ prepare_alpine_iso_tree() {
         echo "ERROR: ключ $REPO_KEY не найден"
         exit 1
     fi
-    abuild-sign -k "$REPO_KEY" -p luna@local.rsa.pub "$apks_dir/APKINDEX.tar.gz"
+    abuild-sign -k "$REPO_KEY" -p luna-repo.rsa.pub "$apks_dir/APKINDEX.tar.gz"
 
     echo "==> Создаём localhost.apkovl.tar.gz (авто-находится initramfs)"
     apkovl_dir="$WORKDIR/apkovl"

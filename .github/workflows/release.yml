@@ -51,6 +51,7 @@ jobs:
             echo "::warning::LUNA_REPO_RSA secret not set — generating ephemeral key (ISO pub key will differ from repo)"
             docker run --rm -v "$PWD:/w" -w /w alpine:3.20 \
               sh -c "apk add --no-cache abuild >/dev/null && abuild-keygen -a -i -n luna-repo -f build/keys/luna-repo.rsa"
+            cp build/keys/luna-repo.rsa.pub overlay/etc/apk/keys/luna-repo.rsa.pub
             cp build/keys/luna-repo.rsa.pub overlay/etc/apk/keys/luna@local.rsa.pub
           fi
 

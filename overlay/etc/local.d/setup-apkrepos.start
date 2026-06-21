@@ -1,21 +1,33 @@
 #!/bin/sh
-# После boot — только CDN Alpine. Локальный ISO-репо нужен initramfs, не runtime.
+# После boot — CDN Alpine + локальный Luna repo (если распакован).
 
 . /etc/os-release 2>/dev/null || VERSION_ID=3.20
 ver="${VERSION_ID%.*}"
 
-# Уже без локального репо — не трогаем
-if [ -f /etc/apk/repositories ] && \
-	grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories && \
-	! grep -qE '^/|^@|/media/' /etc/apk/repositories 2>/dev/null; then
-	exit 0
+LUNA_SHARE="${LUNA_SHARE:-/usr/share/luna}"
+if [ -r "$LUNA_SHARE/luna-apk-repo.sh" ]; then
+	# shellcheck disable=SC1091
+	. "$LUNA_SHARE/luna-apk-repo.sh"
 fi
 
-mkdir -p /var/cache/apk /etc/apk/cache
+need_cdn=1
+if [ -f /etc/apk/repositories ] && \
+	grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories && \
+	grep -q "alpine/v${ver}/" /etc/apk/repositories 2>/dev/null && \
+	! grep -qE '^/|^@|/media/' /etc/apk/repositories 2>/dev/null; then
+	need_cdn=0
+fi
 
-cat > /etc/apk/repositories <<EOF
+if [ "$need_cdn" -eq 1 ]; then
+	mkdir -p /var/cache/apk /etc/apk/cache
+	cat > /etc/apk/repositories <<EOF
 https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
 https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
 EOF
+fi
+
+if command -v luna_apk_repo_present >/dev/null 2>&1 && luna_apk_repo_present; then
+	ensure_luna_apk_repo_in_repositories
+fi
 
 apk update --quiet 2>/dev/null || true

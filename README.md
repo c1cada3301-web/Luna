@@ -17,6 +17,8 @@
 ```bash
 mkdir -p build/keys
 abuild-keygen -a -i -n luna-repo -f build/keys/luna-repo.rsa
+cp build/keys/luna-repo.rsa.pub overlay/etc/apk/keys/luna-repo.rsa.pub
+# legacy alias on ISO boot repo:
 cp build/keys/luna-repo.rsa.pub overlay/etc/apk/keys/luna@local.rsa.pub
 ```
 
@@ -131,7 +133,7 @@ Luna/
 4. **Локально:** `./scripts/release-local.sh` — Docker build + `gh release create`
 
 Секрет **`LUNA_REPO_RSA`**: `base64 -i build/keys/luna-repo.rsa` → GitHub → Settings → Secrets.  
-Должен соответствовать `overlay/etc/apk/keys/luna@local.rsa.pub`.
+Должен соответствовать `overlay/etc/apk/keys/luna-repo.rsa.pub`.
 
 ## Ограничения
 

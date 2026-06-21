@@ -79,7 +79,7 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 | 1 | ISO на GitHub Releases по тегу `v0.x.0` | ✅ workflow + scripts |
 | 2 | CHANGELOG + bump `luna-release` в одном ритуале | ✅ `scripts/release.sh` |
 | 3 | Канал **stable** (latest release) | ✅ `gh release --latest` |
-| 4 | apk-репо `luna-base` | ⏳ фаза 1 ✅ [план](luna-base-apk-repo.md) · runtime фаза 3 |
+| 4 | apk-репо `luna-base` | ⏳ фаза 3 ✅ runtime · фаза 4 ISO/rootfs [план](luna-base-apk-repo.md) |
 
 **Milestone 5.4:** Luna 1.0.0 — Releases, upgrade, bare metal.
 
@@ -98,7 +98,7 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 ## Что дальше
 
 1. **Mini-PC** smoke-test (5.3.4)
-2. **apk-репо `luna-base`** (5.4.4)
+2. **apk-репо фаза 4** — rootfs только через `luna-base`, без дубля overlay
 
 ### Горизонт
 

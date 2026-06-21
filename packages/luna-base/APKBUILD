@@ -1,7 +1,7 @@
 # Maintainer: Luna <luna@example.com>
 # Luna userspace — built from overlay/ (pkgver patched by scripts/build-apk-repo.sh)
 pkgname=luna-base
-pkgver=0.8.7
+pkgver=0.8.8
 pkgrel=0
 pkgdesc="Luna OS userspace (CLI, scripts, branding)"
 url="https://github.com/c1cada3301-web/Luna"
@@ -27,6 +27,7 @@ package() {
 	cp -a "$overlay/usr/share/luna" "$pkgdir/usr/share/"
 
 	for rel in \
+		etc/apk/keys/luna-repo.rsa.pub \
 		etc/profile.d/luna-prompt.sh \
 		etc/profile.d/luna-locale.sh \
 		etc/init.d/luna-agent \
@@ -51,4 +52,12 @@ package() {
 
 post_install() {
 	rm -f /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
+	if [ -f /etc/apk/keys/luna-repo.rsa.pub ] && \
+		[ ! -f /etc/apk/keys/luna@local.rsa.pub ]; then
+		ln -sf luna-repo.rsa.pub /etc/apk/keys/luna@local.rsa.pub 2>/dev/null || true
+	fi
+}
+
+post_upgrade() {
+	post_install
 }

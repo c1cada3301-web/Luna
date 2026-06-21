@@ -2,6 +2,19 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.8] — 2026-06-21
+
+### Added
+
+- **`luna-apk-repo.sh`:** `_ensure_luna_apk_repo`, `apk upgrade luna-base` из file repo
+- **`/etc/apk/repositories`:** строка `/var/lib/luna/apk-repo` (setup-apkrepos + upgrade)
+- **Live ISO:** bundled apk-repo в `/usr/share/luna/apk-repo`; `luna install` ставит `luna-base` в chroot
+
+### Fixed
+
+- **Подпись apk:** `luna-repo.rsa.pub` (совпадает с `.SIGN.RSA.luna-repo.rsa.pub` в пакете) — index без `--allow-untrusted`
+- **`setup-apkrepos.start`:** CDN + Luna repo при boot
+
 ## [0.8.7] — 2026-06-21
 
 ### Fixed

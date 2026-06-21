@@ -7,7 +7,7 @@
 #   aarch64/APKINDEX.tar.gz  (empty stub for aarch64 hosts)
 #   x86_64/APKINDEX.tar.gz   (empty stub for x86_64 hosts)
 #
-# /etc/apk/repositories: /var/lib/luna/apk-repo
+# /etc/apk/repositories: /var/lib/luna/apk-repo  (apk reads $ARCH/APKINDEX under it)
 
 set -euo pipefail
 
@@ -24,8 +24,8 @@ case "$OUT_DIR" in
 	*) OUT_DIR="$ROOT/$OUT_DIR" ;;
 esac
 KEY="$ROOT/build/keys/luna-repo.rsa"
-PUB="$ROOT/overlay/etc/apk/keys/luna@local.rsa.pub"
-PUB_NAME="luna@local.rsa.pub"
+PUB="$ROOT/overlay/etc/apk/keys/luna-repo.rsa.pub"
+PUB_NAME="luna-repo.rsa.pub"
 PKG_SRC="$ROOT/packages/luna-base"
 BUILD_DIR="$ROOT/work/apk-build"
 PKGDEST_ROOT="$ROOT/work/apk-pkg"
@@ -68,14 +68,15 @@ APK="$(find "$PKGDEST_ROOT" -name "luna-base-${VERSION}-r*.apk" -print -quit 2>/
 
 cp -a "$APK" "$STAGING_NOARCH/"
 cd "$STAGING_NOARCH"
-apk index --allow-untrusted -o APKINDEX.tar.gz ./*.apk
+apk index -o APKINDEX.tar.gz ./*.apk
 abuild-sign -k "$KEY" -p "$PUB_NAME" APKINDEX.tar.gz
 
-# apk on $ARCH hosts requires $ARCH/APKINDEX.tar.gz even for noarch-only repos
+# apk on $ARCH hosts reads $ARCH/APKINDEX — include noarch packages there too
 for arch in aarch64 x86_64; do
 	mkdir -p "$STAGING_ROOT/$arch"
+	cp -a "$STAGING_NOARCH/"* "$STAGING_ROOT/$arch/"
 	cd "$STAGING_ROOT/$arch"
-	apk index -o APKINDEX.tar.gz
+	apk index -o APKINDEX.tar.gz ./*.apk
 	abuild-sign -k "$KEY" -p "$PUB_NAME" APKINDEX.tar.gz
 done
 
