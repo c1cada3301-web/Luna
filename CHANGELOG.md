@@ -2,6 +2,16 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.2] — 2026-06-21
+
+### Fixed
+
+- **`_ensure_cdn_repos`:** `${VERSION_ID%%.*}` обрезал `3.20` до `3` — заменено на `%.*` (как в `setup-apkrepos.start`)
+- Повторный `luna upgrade` перезаписывает CDN repos, если версия в URL неверная (например `v3/` вместо `v3.20/`)
+- **`luna-install.sh`:** та же ошибка в post-install chroot
+- **`luna self-update`:** подсказки при отсутствии `curl` или `ca-certificates`
+- **`packages-install.txt`:** `curl`, `ca-certificates` на диске (bare metal)
+
 ## [0.8.1] — 2026-06-21
 
 ### Added

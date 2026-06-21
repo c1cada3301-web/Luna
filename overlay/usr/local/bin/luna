@@ -147,23 +147,25 @@ cmd_install() {
 	exec bash "$LUNA_SHARE/luna-install.sh"
 }
 
-_ensure_cdn_repos() {
-	if [ -f /etc/apk/repositories ] && grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories; then
-		# Убрать дубли http/https
-		if grep -q '^http:' /etc/apk/repositories 2>/dev/null; then
-			# shellcheck disable=SC1091
-			. /etc/os-release 2>/dev/null || VERSION_ID=3.20
-			local ver="${VERSION_ID%%.*}"
-			cat > /etc/apk/repositories <<EOF
-https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
-https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
-EOF
-		fi
-		return 0
-	fi
+_alpine_repo_ver() {
 	# shellcheck disable=SC1091
 	. /etc/os-release 2>/dev/null || VERSION_ID=3.20
-	local ver="${VERSION_ID%%.*}"
+	# %.* — minor release (3.20); %%.* ошибочно даёт только major (3)
+	printf '%s' "${VERSION_ID%.*}"
+}
+
+_ensure_cdn_repos() {
+	local ver
+	ver="$(_alpine_repo_ver)"
+
+	if [ -f /etc/apk/repositories ] && grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories; then
+		# Уже CDN с правильной версией — не трогаем
+		if ! grep -q '^http:' /etc/apk/repositories 2>/dev/null && \
+			grep -q "alpine/v${ver}/" /etc/apk/repositories 2>/dev/null; then
+			return 0
+		fi
+	fi
+
 	cat > /etc/apk/repositories <<EOF
 https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
 https://dl-cdn.alpinelinux.org/alpine/v${ver}/community

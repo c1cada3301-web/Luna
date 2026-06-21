@@ -334,7 +334,7 @@ PermitEmptyPasswords no
 SSHD
 
 . /etc/os-release 2>/dev/null || VERSION_ID=3.20
-ver="\${VERSION_ID%%.*}"
+ver="\${VERSION_ID%.*}"
 cat > /etc/apk/repositories <<REPOS
 https://dl-cdn.alpinelinux.org/alpine/v\${ver}/main
 https://dl-cdn.alpinelinux.org/alpine/v\${ver}/community

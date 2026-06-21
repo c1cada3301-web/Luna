@@ -125,7 +125,11 @@ luna_self_update() {
 		return 2
 	fi
 	if ! command -v curl >/dev/null 2>&1; then
-		echo "luna self-update: curl not found" >&2
+		printf '  skip: curl not installed — run: apk add curl\n\n' >&2
+		return 2
+	fi
+	if [ ! -f /etc/ssl/certs/ca-certificates.crt ]; then
+		printf '  skip: ca-certificates missing — run: apk add ca-certificates\n\n' >&2
 		return 2
 	fi
 
