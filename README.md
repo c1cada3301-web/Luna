@@ -113,6 +113,26 @@ Luna/
 
 [Roadmap](docs/roadmap.md) · [Changelog](CHANGELOG.md) · [Package profiles](docs/luna-base.md)
 
+## Релизы
+
+Стабильные ISO публикуются на [GitHub Releases](https://github.com/c1cada3301-web/Luna/releases) по тегу `v0.x.0`.
+
+| Файл | Назначение |
+|------|------------|
+| `luna-*-aarch64.iso` | Apple Silicon VM, ARM mini-PC, UEFI |
+| `luna-*-x86_64.iso` | Intel/AMD VM, NUC, UEFI/BIOS |
+| `SHA256SUMS` | контрольные суммы |
+
+### Опубликовать релиз (maintainer)
+
+1. Bump `overlay/etc/luna-release` + секция в `CHANGELOG.md`
+2. Commit → push `main`
+3. **CI (рекомендуется):** `./scripts/release.sh --push` — тег → GitHub Actions собирает оба ISO
+4. **Локально:** `./scripts/release-local.sh` — Docker build + `gh release create`
+
+Секрет **`LUNA_REPO_RSA`**: `base64 -i build/keys/luna-repo.rsa` → GitHub → Settings → Secrets.  
+Должен соответствовать `overlay/etc/apk/keys/luna@local.rsa.pub`.
+
 ## Ограничения
 
 - Live в RAM — данные теряются после reboot (кроме `/mnt/persist` с диском `LUNA_DATA`)

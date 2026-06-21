@@ -72,16 +72,18 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 
 **Milestone 5.3:** Luna с USB на реальном ARM/x86 mini-PC, SSH с Mac по LAN.
 
-### 5.4 — Релизы как продукт
+### 5.4 — Релизы как продукт ← **в работе**
 
 | # | Задача | Статус |
 |---|--------|--------|
-| 1 | ISO на GitHub Releases | ⏳ |
-| 2 | CHANGELOG + bump ритуал | 🔄 |
-| 3 | Канал stable / beta | ⏳ |
+| 1 | ISO на GitHub Releases по тегу `v0.x.0` | ✅ workflow + scripts |
+| 2 | CHANGELOG + bump `luna-release` в одном ритуале | ✅ `scripts/release.sh` |
+| 3 | Канал **stable** (latest release) | ✅ `gh release --latest` |
 | 4 | apk-репо `luna-base` | ⏳ |
 
-**Milestone 5.4:** Luna 1.0.0 — Releases, upgrade, bare metal, agent stub.
+**Milestone 5.4:** Luna 1.0.0 — Releases, upgrade, bare metal.
+
+**Первый релиз:** `v0.8.0` — `./scripts/release-local.sh` или push tag после merge workflow.
 
 ### Порядок работ
 
@@ -95,10 +97,9 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 
 ## Что дальше
 
-1. **Smoke-test 0.8.0** — чистый `luna install` → `uname -r` содержит `lts`, `apk info linux-firmware`
-2. **Mini-PC** — USB install, SSH по LAN (закрывает 5.3.4)
-3. **x86_64** — QEMU/Intel VM install+boot
-4. **5.4** — GitHub Release `v0.8.0`, тег, `.iso` артефакт
+1. **Опубликовать `v0.8.0`** — commit workflow → `./scripts/release.sh --push`
+2. **Mini-PC** smoke-test (5.3.4)
+3. **x86_64** install+boot в VM
 
 ### Горизонт
 

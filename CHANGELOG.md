@@ -2,10 +2,6 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
-### Verified
-
-- VirtualBox ARM64: `luna install` → reboot с `/dev/sda3` → `luna status` (`boot: installed (disk)`)
-
 ## [0.8.0] — 2026-06-21
 
 ### Added
@@ -22,7 +18,8 @@
 
 ### Verified
 
-- 5.2: VirtualBox install, SSH, python3 persist, `luna upgrade`, scp → 0.7.0
+- VirtualBox ARM64: `luna install` → reboot → `luna status` (`boot: installed (disk)`)
+- 5.2: SSH, python3 persist, `luna upgrade`
 
 ## [0.7.0] — 2026-06-21
 

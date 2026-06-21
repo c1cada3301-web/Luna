@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ISO ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            compose_service: luna-build-aarch64
+            platform: linux/arm64
+          - arch: x86_64
+            compose_service: luna-build-x86_64
+            platform: linux/amd64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches luna-release
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VER="$(grep '^LUNA_VERSION=' overlay/etc/luna-release | cut -d= -f2)"
+          test "$TAG" = "$VER" || {
+            echo "Tag v$TAG != LUNA_VERSION=$VER in overlay/etc/luna-release"
+            exit 1
+          }
+          grep -q "## \\[$VER\\]" CHANGELOG.md || {
+            echo "CHANGELOG.md missing section [$VER]"
+            exit 1
+          }
+
+      - name: Setup APK signing key
+        env:
+          LUNA_REPO_RSA: ${{ secrets.LUNA_REPO_RSA }}
+        run: |
+          mkdir -p build/keys
+          if [ -n "$LUNA_REPO_RSA" ]; then
+            echo "$LUNA_REPO_RSA" | base64 -d > build/keys/luna-repo.rsa
+            chmod 600 build/keys/luna-repo.rsa
+          else
+            echo "::warning::LUNA_REPO_RSA secret not set — generating ephemeral key (ISO pub key will differ from repo)"
+            docker run --rm -v "$PWD:/w" -w /w alpine:3.20 \
+              sh -c "apk add --no-cache abuild >/dev/null && abuild-keygen -a -i -n luna-repo -f build/keys/luna-repo.rsa"
+            cp build/keys/luna-repo.rsa.pub overlay/etc/apk/keys/luna@local.rsa.pub
+          fi
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build ISO
+        run: docker compose run --rm ${{ matrix.compose_service }}
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iso-${{ matrix.arch }}
+          path: out/luna-*-${{ matrix.arch }}.iso
+          if-no-files-found: error
+
+  publish:
+    name: GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download ISOs
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Checksums
+        run: |
+          cd release-assets
+          sha256sum luna-*.iso > SHA256SUMS
+          ls -lh luna-*.iso SHA256SUMS
+
+      - name: Release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { show=1; next }
+            show && /^## \[/ { exit }
+            show { print }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md || {
+            echo "Empty release notes for $VERSION"
+            exit 1
+          }
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release upload "${GITHUB_REF_NAME}" release-assets/* \
+            --clobber 2>/dev/null || \
+          gh release create "${GITHUB_REF_NAME}" release-assets/* \
+            --title "Luna ${VERSION}" \
+            --notes-file release-notes.md \
+            --latest
