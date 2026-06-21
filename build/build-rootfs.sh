@@ -38,6 +38,7 @@ if [ -f "$ROOT/build/packages.txt" ]; then
 fi
 
 cp -a "$ROOT/overlay/." "$ROOTFS/"
+chmod +x "$ROOTFS"/etc/local.d/*.start 2>/dev/null || true
 
 configure_inittab() {
     # Только tty1 — serial-консоли добавит initramfs (setup_inittab_console),
@@ -62,14 +63,28 @@ chroot "$ROOTFS" /bin/sh <<'CHROOT'
 setup-timezone -i UTC
 passwd -d root >/dev/null 2>&1 || true
 
+# Пользователь luna + sudo (wheel)
+addgroup -g 1000 wheel 2>/dev/null || true
+if ! id luna >/dev/null 2>&1; then
+	adduser -D -u 1000 -G wheel -h /home/luna -s /bin/bash luna
+fi
+passwd -d luna >/dev/null 2>&1 || true
+chown luna:wheel /home/luna 2>/dev/null || true
+install -d -m 750 /etc/sudoers.d
+echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel
+chmod 440 /etc/sudoers.d/wheel
+
 rc-update add devfs sysinit
 rc-update add dmesg sysinit
 rc-update add mdev sysinit
 rc-update add hwdrivers sysinit
 rc-update add sysctl sysinit
 rc-update add hostname boot
+rc-update add networking boot
 rc-update add bootmisc boot
 rc-update add syslog boot
+rc-update add local boot
+rc-update add sshd default
 rc-update add mount-ro shutdown
 rc-update add killprocs shutdown
 rc-update add savecache shutdown

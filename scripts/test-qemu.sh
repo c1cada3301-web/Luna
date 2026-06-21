@@ -14,7 +14,7 @@ if [ -z "$ARCH" ]; then
     esac
 fi
 
-ISO="$ROOT/out/luna-0.1.0-${ARCH}.iso"
+ISO="$ROOT/out/luna-0.2.0-${ARCH}.iso"
 
 if [ ! -f "$ISO" ]; then
     echo "ISO не найден: $ISO"

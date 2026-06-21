@@ -23,7 +23,9 @@ apk add (локальный репозиторий + подписанный APKI
        ↓
 unpack localhost.apkovl.tar.gz (etc/ + root/)
        ↓
-switch_root → OpenRC → agetty tty1 → login
+switch_root → OpenRC → local.d → login
+       ↓
+setup-apkrepos.start: /etc/apk/repositories ← только CDN (ISO-репо убирается)
 ```
 
 ISO содержит:
@@ -43,7 +45,7 @@ ISO содержит:
 | Целевая VM | QEMU, VirtualBox Intel | VirtualBox / UTM на Apple Silicon |
 | Bootloader | syslinux (BIOS) | GRUB UEFI (`BOOTAA64.EFI`) |
 | Kernel cmdline | `console=tty0 console=ttyS0` | `console=tty0` |
-| ISO | `out/luna-0.1.0-x86_64.iso` | `out/luna-0.1.0-aarch64.iso` |
+| ISO | `out/luna-0.2.0-x86_64.iso` | `out/luna-0.2.0-aarch64.iso` |
 
 Сборка: `LUNA_ARCH` в Docker (`docker-compose.yml`).
 
@@ -95,6 +97,16 @@ Boot-time `apk` требует доверенный `APKINDEX`. Схема:
 
 1. `abuild-sign -k build/keys/luna-repo.rsa -p luna@local.rsa.pub`
 2. Публичный ключ в `overlay/etc/apk/keys/luna@local.rsa.pub` → попадает в apkovl и initramfs
+
+## APK: boot vs runtime
+
+| Этап | Репозитории | Зачем |
+|------|-------------|--------|
+| Initramfs | Локальный ISO (`apks/.boot_repository`) | Установка rootfs без сети |
+| apkovl | **Без** `etc/apk/repositories` | Иначе при NAT apk тянет CDN во время boot |
+| После boot | `setup-apkrepos.start` → **только CDN** | `apk add` без конфликта с ISO-индексом |
+
+Локальный репо на ISO (~76 пакетов) и CDN (тысячи) **не смешиваются** после загрузки.
 
 ## Тестирование
 

@@ -1,0 +1,13 @@
+#!/bin/sh
+# DHCP на всех интерфейсах кроме lo (VirtualBox ARM часто не eth0/enp0s3).
+
+for dev in /sys/class/net/*; do
+	iface="${dev##*/}"
+	[ "$iface" = "lo" ] && continue
+	ip link set "$iface" up 2>/dev/null || continue
+	if ip -4 addr show dev "$iface" 2>/dev/null | grep -q 'inet '; then
+		continue
+	fi
+	udhcpc -i "$iface" -b -q -t 10 -T 3 2>/dev/null &
+done
+wait

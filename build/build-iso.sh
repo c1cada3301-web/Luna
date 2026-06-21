@@ -9,7 +9,7 @@ LUNA_ARCH="${LUNA_ARCH:-x86_64}"
 WORKDIR="$ROOT/work/${LUNA_ARCH}"
 ROOTFS="$WORKDIR/rootfs"
 ISODIR="$WORKDIR/isodir"
-ISO="$ROOT/out/luna-0.1.0-${LUNA_ARCH}.iso"
+ISO="$ROOT/out/luna-0.2.0-${LUNA_ARCH}.iso"
 REPO_KEY="$ROOT/build/keys/luna-repo.rsa"
 
 prepare_alpine_iso_tree() {
@@ -46,13 +46,17 @@ prepare_alpine_iso_tree() {
     echo "==> Создаём localhost.apkovl.tar.gz (авто-находится initramfs)"
     apkovl_dir="$WORKDIR/apkovl"
     rm -rf "$apkovl_dir"
-    mkdir -p "$apkovl_dir/root"
+    mkdir -p "$apkovl_dir/root" "$apkovl_dir/home/luna"
     chmod 700 "$apkovl_dir/root"
+    chown 1000:1000 "$apkovl_dir/home/luna" 2>/dev/null || true
     cp -a "$ROOTFS/etc" "$apkovl_dir/"
+    if [ -d "$ROOTFS/home/luna" ]; then
+        cp -a "$ROOTFS/home/luna/." "$apkovl_dir/home/luna/" 2>/dev/null || true
+    fi
     # Не копируем online-репозитории: при наличии сети в VM apk тянет
     # чужой индекс и падает с "package mentioned in index not found".
     rm -f "$apkovl_dir/etc/apk/repositories"
-    tar -C "$apkovl_dir" -czf "$ISODIR/localhost.apkovl.tar.gz" etc root
+    tar -C "$apkovl_dir" -czf "$ISODIR/localhost.apkovl.tar.gz" etc root home
 
     if [ -f "$ROOTFS/etc/alpine-release" ]; then
         cp "$ROOTFS/etc/alpine-release" "$ISODIR/.alpine-release"
@@ -60,10 +64,10 @@ prepare_alpine_iso_tree() {
 
     case "$LUNA_ARCH" in
         aarch64)
-            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod quiet console=tty0 modloop=none"
+            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod,virtio_net,virtio_pci,virtio_mmio quiet console=tty0 modloop=none"
             ;;
         x86_64)
-            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod quiet console=tty0 console=ttyS0,115200 modloop=none"
+            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod,virtio_net,virtio_pci quiet console=tty0 console=ttyS0,115200 modloop=none"
             ;;
     esac
 
@@ -148,7 +152,7 @@ EOF
 esac
 
 if [ "$LUNA_ARCH" = "x86_64" ]; then
-    cp "$ISO" "$ROOT/out/luna-0.1.0.iso"
+    cp "$ISO" "$ROOT/out/luna-0.2.0.iso"
 fi
 
 echo "==> ISO готов: $ISO ($(du -h "$ISO" | cut -f1))"

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Монтирует диск VirtualBox с меткой LUNA_DATA в /mnt/persist (если есть).
+
+mkdir -p /mnt/persist
+grep -q '[[:space:]]/mnt/persist[[:space:]]' /proc/mounts && exit 0
+
+if blkid -L LUNA_DATA >/dev/null 2>&1; then
+	mount -t ext4 LABEL=LUNA_DATA /mnt/persist 2>/dev/null && \
+		echo "Luna: /mnt/persist ← LUNA_DATA"
+fi

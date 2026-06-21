@@ -3,3 +3,11 @@
 
 bash
 nano
+curl
+wget
+git
+vim
+sudo
+openssh
+e2fsprogs
+htop

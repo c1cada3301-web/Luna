@@ -1,1 +1,5 @@
-Welcome to Luna
+Welcome to Luna 0.2.0
+Network: DHCP (NAT/Bridged in VM settings)
+Users: root or luna (empty password) — luna has sudo
+Persist: mkfs.ext4 -L LUNA_DATA /dev/sdX → auto-mount /mnt/persist
+Online: apk add <pkg> (after network is up)

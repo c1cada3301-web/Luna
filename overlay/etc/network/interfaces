@@ -1,0 +1,8 @@
+# Luna — DHCP на типичных интерфейсах VirtualBox/QEMU/virtio
+
+auto lo
+iface lo inet loopback
+
+iface eth0 inet dhcp
+iface enp0s3 inet dhcp
+iface end0 inet dhcp

@@ -1,0 +1,21 @@
+#!/bin/sh
+# После boot — только CDN Alpine. Локальный ISO-репо нужен initramfs, не runtime.
+
+. /etc/os-release 2>/dev/null || VERSION_ID=3.20
+ver="${VERSION_ID%.*}"
+
+# Уже без локального репо — не трогаем
+if [ -f /etc/apk/repositories ] && \
+	grep -q 'dl-cdn.alpinelinux.org' /etc/apk/repositories && \
+	! grep -qE '^/|^@|/media/' /etc/apk/repositories 2>/dev/null; then
+	exit 0
+fi
+
+mkdir -p /var/cache/apk /etc/apk/cache
+
+cat > /etc/apk/repositories <<EOF
+https://dl-cdn.alpinelinux.org/alpine/v${ver}/main
+https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
+EOF
+
+apk update --quiet 2>/dev/null || true
