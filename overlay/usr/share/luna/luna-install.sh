@@ -482,6 +482,11 @@ preflight() {
 		has_network || die "no network — check VirtualBox NAT and reboot live session"
 	fi
 	ensure_install_tools
+	if [ -r "$LUNA_SHARE/luna-apk-repo.sh" ]; then
+		# shellcheck disable=SC1091
+		. "$LUNA_SHARE/luna-apk-repo.sh"
+		strip_luna_base_from_world 2>/dev/null || true
+	fi
 }
 
 main() {

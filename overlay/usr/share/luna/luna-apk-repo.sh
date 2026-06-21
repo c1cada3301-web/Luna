@@ -61,22 +61,9 @@ ensure_luna_apk_repos_live() {
 }
 
 prepare_live_for_setup_alpine() {
-	local apk_file
-
 	ensure_luna_apk_repos_live || die "apk update failed — check /etc/apk/repositories"
-
-	if luna_base_in_world; then
-		apk_file="$(luna_base_apk_file 2>/dev/null || true)"
-		[ -n "$apk_file" ] || apk_file="$(find "$LUNA_APK_REPO_BUNDLED" "$LUNA_APK_REPO_ROOT" \
-			-name 'luna-base-*.apk' 2>/dev/null | head -1)"
-		if [ -n "$apk_file" ]; then
-			apk add --force-overwrite luna-base 2>/dev/null || \
-				apk add --force-overwrite --allow-untrusted "$apk_file" 2>/dev/null || true
-		fi
-	fi
-
 	strip_luna_base_from_world
-	luna_base_in_world && die "luna-base still in apk world — reboot live ISO or use Luna 0.9.4+"
+	luna_base_in_world && die "luna-base still in apk world — use Luna 0.9.6+ live ISO"
 }
 
 extract_luna_apk_repo() {

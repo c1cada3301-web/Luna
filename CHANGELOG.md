@@ -2,6 +2,13 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.6] — 2026-06-21
+
+### Fixed
+
+- **Live rootfs:** Luna files из `luna-base.apk` распаковываются без `apk add` — на live нет `world[luna-base]`; `setup-keymap` и `setup-alpine` больше не ломают любой `apk add`
+- **Boot:** `strip_luna_base_from_world` в `setup-apkrepos.start` (страховка для старых apkovl)
+
 ## [0.9.5] — 2026-06-21
 
 ### Fixed

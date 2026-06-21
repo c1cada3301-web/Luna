@@ -28,4 +28,5 @@ fi
 
 if [ -r "$LUNA_SHARE/luna-apk-repo.sh" ]; then
 	ensure_luna_apk_repos_live 2>/dev/null || apk update --quiet 2>/dev/null || true
+	strip_luna_base_from_world 2>/dev/null || true
 fi

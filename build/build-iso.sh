@@ -38,16 +38,18 @@ prepare_alpine_iso_tree() {
         -o "$apks_dir" \
         $fetch_pkgs
 
-    if apk info --root "$ROOTFS" -e luna-base >/dev/null 2>&1; then
-        luna_apk="$(find "$ROOTFS/usr/share/luna/apk-repo/$apk_arch" \
+    luna_apk="$(find "$ROOTFS/usr/share/luna/apk-repo/$apk_arch" \
+        -maxdepth 1 -name 'luna-base-*.apk' -print -quit 2>/dev/null || true)"
+    if [ -z "$luna_apk" ]; then
+        luna_apk="$(find "$ROOTFS/usr/share/luna/apk-repo/noarch" \
             -maxdepth 1 -name 'luna-base-*.apk' -print -quit 2>/dev/null || true)"
-        if [ -n "$luna_apk" ]; then
-            cp -a "$luna_apk" "$apks_dir/"
-            echo "    + luna-base (local repo → ISO apks)"
-        else
-            echo "ERROR: luna-base installed but apk missing under usr/share/luna/apk-repo/$apk_arch" >&2
-            exit 1
-        fi
+    fi
+    if [ -n "$luna_apk" ]; then
+        cp -a "$luna_apk" "$apks_dir/"
+        echo "    + luna-base (bundled repo → ISO apks)"
+    elif [ -x "$ROOTFS/usr/bin/luna" ]; then
+        echo "ERROR: Luna files present but luna-base apk missing under usr/share/luna/apk-repo" >&2
+        exit 1
     fi
 
     echo "==> Создаём и подписываем APKINDEX.tar.gz"
