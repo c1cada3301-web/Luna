@@ -1,12 +1,32 @@
 services:
-  luna-build:
+  # x86_64 — QEMU на Mac, VirtualBox на Intel PC
+  luna-build-x86_64:
     platform: linux/amd64
     build:
       context: .
       dockerfile: build/Dockerfile
+    environment:
+      LUNA_ARCH: x86_64
     volumes:
       - ./overlay:/luna/overlay
       - ./build:/luna/build
       - ./out:/luna/out
+      - ./work:/luna/work
+    working_dir: /luna
+    command: ./build/build-iso.sh
+
+  # aarch64 — VirtualBox / UTM на Apple Silicon (нативно, быстро)
+  luna-build-aarch64:
+    platform: linux/arm64
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+    environment:
+      LUNA_ARCH: aarch64
+    volumes:
+      - ./overlay:/luna/overlay
+      - ./build:/luna/build
+      - ./out:/luna/out
+      - ./work:/luna/work
     working_dir: /luna
     command: ./build/build-iso.sh

@@ -2,17 +2,50 @@
 
 ## Выбор базы: Alpine Linux
 
-| Критерий | Alpine | Debian minimal |
-|----------|--------|----------------|
-| Размер base | ~5–130 MB | ~200+ MB |
-| Init | OpenRC (простой) | systemd |
-| Пакеты | `apk` | `apt` |
-| Документация для custom ISO | `mkimage`, `lbu` | debootstrap + live-build |
-| Сложность для новичка | Средняя | Средняя |
+| Критерий | Alpine |
+|----------|--------|
+| Размер base | ~5–130 MB |
+| Init | OpenRC |
+| Пакеты | `apk` |
+| Custom live ISO | initramfs diskless + локальный репозиторий на ISO |
+| Сложность | Средняя |
 
-**Решение:** Alpine — меньше образ, проще ментальная модель для minimal distro, хорошо подходит для live ISO и embedded-подхода.
+**Решение:** Alpine — компактная база, хорошо подходит для live ISO.
 
-Переход на Debian возможен позже (ADR отдельно), если понадобится экосистема `.deb`.
+## Boot-модель Luna (diskless live)
+
+```
+GRUB/syslinux → vmlinuz-virt + initramfs-virt
+       ↓
+initramfs: mount ISO9660, find apks/.boot_repository
+       ↓
+apk add (локальный репозиторий + подписанный APKINDEX)
+       ↓
+unpack localhost.apkovl.tar.gz (etc/ + root/)
+       ↓
+switch_root → OpenRC → agetty tty1 → login
+```
+
+ISO содержит:
+
+- `boot/vmlinuz-virt`, `boot/initramfs-virt`
+- `boot/modloop-virt` (squashfs модулей; на M0 не монтируется — `modloop=none`)
+- `apks/<arch>/*.apk` + подписанный `APKINDEX.tar.gz`
+- `localhost.apkovl.tar.gz` — конфиг Luna (hostname, issue, motd, keys)
+- `.alpine-release`
+
+Модули ядра ставятся через пакет `linux-virt` при diskless apk, без modloop.
+
+## Dual-arch
+
+| | x86_64 | aarch64 |
+|---|--------|---------|
+| Целевая VM | QEMU, VirtualBox Intel | VirtualBox / UTM на Apple Silicon |
+| Bootloader | syslinux (BIOS) | GRUB UEFI (`BOOTAA64.EFI`) |
+| Kernel cmdline | `console=tty0 console=ttyS0` | `console=tty0` |
+| ISO | `out/luna-0.1.0-x86_64.iso` | `out/luna-0.1.0-aarch64.iso` |
+
+Сборка: `LUNA_ARCH` в Docker (`docker-compose.yml`).
 
 ## Слои системы
 
@@ -20,95 +53,67 @@
 ┌──────────────────────────────────────────┐
 │  luna-shell / luna-cli        (будущее)  │
 ├──────────────────────────────────────────┤
-│  /etc/luna/*                  конфиги    │
-│  overlay: motd, issue, packages.txt      │
+│  overlay: hostname, issue, motd, release │
 ├──────────────────────────────────────────┤
-│  Alpine rootfs                apk, OpenRC│
+│  Alpine rootfs (diskless tmpfs)  OpenRC  │
 ├──────────────────────────────────────────┤
-│  Linux kernel                 (от Alpine)│
+│  linux-virt kernel (Alpine)              │
 ├──────────────────────────────────────────┤
-│  Bootloader              extlinux /      │
-│                          grub / syslinux │ 
+│  GRUB UEFI / syslinux + ISO9660          │
 └──────────────────────────────────────────┘
 ```
 
-Мы **не форкаем kernel** на старте. Кастомизация — через rootfs overlay и список пакетов.
+Kernel не форкаем. Кастомизация — overlay, `packages.txt`, apkovl.
 
-## Структура репозитория (план)
+## Структура репозитория
 
 ```
 Luna/
-├── docs/                 # документация (этот каталог)
+├── docs/
 ├── build/
-│   ├── Dockerfile        # воспроизводимая сборка на Mac
-│   ├── build-rootfs.sh   # создаёт rootfs из Alpine
-│   ├── build-iso.sh      # упаковывает ISO
-│   └── packages.txt      # список apk-пакетов для Luna
-├── overlay/              # файлы, копируемые в rootfs
-│   └── etc/
-│       ├── hostname
-│       ├── issue
-│       ├── motd
-│       └── luna-release
-├── scripts/
-│   └── test-qemu.sh      # быстрый прогон в QEMU
-└── out/                  # артеfactы сборки (gitignore)
-    └── luna-0.1.0.iso
+│   ├── Dockerfile
+│   ├── build-rootfs.sh
+│   ├── build-iso.sh
+│   ├── packages.txt
+│   └── keys/                 # luna-repo.rsa (gitignore)
+├── overlay/etc/
+├── scripts/test-qemu.sh
+├── docker-compose.yml
+└── out/                      # gitignore
 ```
 
-Папки `build/`, `overlay/` появятся при реализации Milestone 0.
+## Init и консоль
 
-## Сборка
+- **OpenRC** — sysinit/boot/default runlevels
+- **Login:** `/etc/inittab` → `agetty` на `tty1` (без дублирования через OpenRC agetty)
+- Serial-консоли добавляет initramfs (`setup_inittab_console`), только если устройство доступно
+- Root без пароля на M0 (`passwd -d root` при сборке)
 
-### Pipeline
+## Подпись локального репозитория
 
-1. **Rootfs** — `apk` в chroot или официальный `mkimage`-workflow Alpine
-2. **Overlay** — копирование `/overlay` → rootfs
-3. **ISO** — `mkimage` или xorriso + isolinux
-4. **Test** — QEMU локально, VirtualBox для «как пользователь»
+Boot-time `apk` требует доверенный `APKINDEX`. Схема:
 
-### Где собирать
-
-| Хост | Возможность |
-|------|-------------|
-| macOS + Docker | ✅ Рекомендуется: Linux-контейнер с `apk`, chroot |
-| macOS нативно | ⚠️ Ограничено: нет нативного `apk`/debootstrap |
-| Linux VM на Mac | ✅ Полный контроль |
-
-Alpine-образы и `mkimage` рассчитаны на Linux; на Mac используем Docker или Linux VM.
-
-## Init и сервисы
-
-- **OpenRC** — init Alpine по умолчанию
-- На M0: стандартный boot → getty → login
-- Позже: свой runlevel или сервис `luna-agent` (OpenRC init script)
-
-OpenRC init scripts для кастомных сервисов — [Alpine Developer Documentation](https://wiki.alpinelinux.org/wiki/Developer_Documentation).
+1. `abuild-sign -k build/keys/luna-repo.rsa -p luna@local.rsa.pub`
+2. Публичный ключ в `overlay/etc/apk/keys/luna@local.rsa.pub` → попадает в apkovl и initramfs
 
 ## Тестирование
 
 | Инструмент | Назначение |
 |------------|------------|
-| **QEMU** | Быстрые итерации, serial console (`-serial stdio`) |
-| **VirtualBox** | Ручная проверка, snapshots, «как на железе» |
-| **UTM** | Альтернатива на Apple Silicon |
-
-Целевая архитектура гостя: **x86_64** (широкая совместимость с VirtualBox на Intel Mac; на Apple Silicon — эмуляция медленнее, но работает).
+| **VirtualBox ARM64** | Основной тест на Apple Silicon |
+| **QEMU** | Быстрый smoke test из терминала |
 
 ## Безопасность (минимум)
 
-- Root login только на M0 для отладки; на M1 — user + sudo
-- Не хранить секреты в overlay/git
-- AI-shell (фаза 4) — обязательное подтверждение для destructive commands
+- Root без пароля — только M0; на M1 — user + sudo
+- Приватный ключ репозитория не в git
+- AI-shell (фаза 4) — подтверждение destructive commands
 
 ## Языки
 
 | Слой | Язык |
 |------|------|
 | Сборка | Bash, Dockerfile |
-| Конфиг | shell, OpenRC scripts |
-| Luna CLI (фаза 3) | Rust или Go (на выбор позже) |
-| TUI | Rust (ratatui) или Python (textual) |
-| Kernel (если ever) | C, asm, возможно Rust — **отдельный трек** |
-
-На фазах 0–2 достаточно shell и конфигов.
+| Конфиг | shell, OpenRC, inittab |
+| Luna CLI (фаза 3) | Rust или Go |
+| Kernel (если ever) | отдельный трек |

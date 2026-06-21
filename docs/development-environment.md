@@ -1,104 +1,108 @@
 # Окружение разработки
 
-Сборка Luna рассчитана на **macOS** как основной хост разработки; тест — в **VirtualBox** и/или **QEMU**.
+Сборка Luna рассчитана на **macOS**; тест — в **VirtualBox** (Apple Silicon) и/или **QEMU**.
 
 ## Требования
 
 | Компонент | Зачем |
 |-----------|--------|
 | Docker Desktop | Linux-контейнер для сборки rootfs/ISO |
-| QEMU | Быстрый boot ISO из терминала |
-| VirtualBox | Ручное тестирование, snapshots |
+| QEMU | Быстрый boot ISO (`brew install qemu`) |
+| VirtualBox | Ручное тестирование на Apple Silicon |
 | Git | Версионирование |
 
-Опционально: **UTM** (удобнее на Apple Silicon, чем VirtualBox для некоторых сценариев).
+## Apple Silicon vs Intel
 
-## macOS: установка
+| Задача | Apple Silicon (M1/M2/M3) | Intel Mac |
+|--------|--------------------------|-----------|
+| Сборка ARM64 ISO | `docker compose run --rm luna-build-aarch64` | то же (эмуляция или native) |
+| Сборка x86 ISO | `docker compose run --rm luna-build-x86_64` | нативно |
+| Тест в VM | VirtualBox: **ARM 64-bit + EFI** | VirtualBox x86_64 или QEMU |
+
+На Apple Silicon **не** используй x86_64 ISO в VirtualBox — только `luna-0.1.0-aarch64.iso`.
+
+## Первоначальная настройка
+
+### Ключ подписи (один раз)
 
 ```bash
-# Homebrew
-brew install docker qemu git
-
-# Docker Desktop — отдельно с https://docker.com/products/docker-desktop
-# VirtualBox — отдельно с https://virtualbox.org (или brew install --cask virtualbox)
+mkdir -p build/keys
+abuild-keygen -a -i -n luna-repo -f build/keys/luna-repo.rsa
+cp build/keys/luna-repo.rsa.pub overlay/etc/apk/keys/luna@local.rsa.pub
 ```
 
-## Apple Silicon (M1/M2/M3)
+Приватный ключ в `.gitignore`. Без него `build-iso.sh` завершится с ошибкой.
 
-- **Сборка** в Docker (linux/amd64 или linux/arm64) — работает нормально
-- **VirtualBox** на ARM Mac: x86_64 guest эмулируется медленно; для частых итераций предпочитай **QEMU**
-- **UTM** может быть удобнее для ARM-native Linux guest, но наш первый ISO — **x86_64** для универсальности
+### Сборка
+
+```bash
+docker compose run --rm luna-build-aarch64
+# или
+docker compose run --rm luna-build-x86_64
+```
+
+Артеfact: `out/luna-0.1.0-<arch>.iso`
 
 ## Workflow разработчика
 
 ```
-┌─────────┐     build/      ┌─────────┐     out/       ┌──────────┐
-│ Mac     │ ──────────────► │  ISO    │ ─────────────► │ QEMU/VBox│
-│ + Docker│                 └─────────┘                └──────────┘
+┌─────────┐   docker compose   ┌─────────┐   out/      ┌──────────┐
+│ Mac     │ ────────────────► │  ISO    │ ──────────► │ QEMU/VBox│
+│ + Docker│                   └─────────┘             └──────────┘
 └─────────┘
 ```
 
 1. Правки в `overlay/` или `build/packages.txt`
-2. `./build/build-iso.sh` (будет добавлен)
+2. `docker compose run --rm luna-build-aarch64`
 3. `./scripts/test-qemu.sh` — smoke test
-4. VirtualBox snapshot «after change X» для регрессий
+4. VirtualBox snapshot после успешной загрузки
 
-## Docker-сборка (концепт)
+## Docker-сборка
 
-Сборочный контейнер на базе Alpine:
+`docker-compose.yml` монтирует `overlay/`, `build/`, `out/`, `work/` в контейнер Alpine 3.20.
 
-```dockerfile
-# build/Dockerfile — черновик для M0
-FROM alpine:3.20
-RUN apk add --no-cache alpine-sdk abuild mkinitfs syslinux xorriso squashfs-tools
-WORKDIR /luna
-```
+`build/Dockerfile` ставит:
 
-Запуск с монтированием репозитория:
+- **x86_64:** syslinux, xorriso, squashfs-tools, alpine-sdk, abuild
+- **aarch64:** grub-efi, dosfstools, mtools, xorriso, …
 
-```bash
-docker build -t luna-build -f build/Dockerfile .
-docker run --rm -v "$(pwd):/luna" -w /luna luna-build ./build/build-iso.sh
-```
-
-Точные команды появятся вместе со скриптами Milestone 0.
+Команда внутри контейнера: `./build/build-iso.sh` (вызывает `build-rootfs.sh`, затем упаковывает ISO).
 
 ## Тестирование ISO
 
-### QEMU (рекомендуется для итераций)
-
-```bash
-qemu-system-x86_64 \
-  -machine q35 \
-  -cpu qemu64 \
-  -m 1024 \
-  -cdrom out/luna-0.1.0.iso \
-  -boot d \
-  -serial stdio \
-  -display none
-```
-
-Serial console полезен, если графический вывод глючит.
-
-### VirtualBox
+### VirtualBox (рекомендуется на Apple Silicon)
 
 | Параметр | Значение |
 |----------|----------|
-| Type | Linux, Other Linux (64-bit) |
-| Memory | 512 MB – 1 GB |
-| Disk | не обязателен для live ISO |
-| Boot order | Optical first |
+| Type | Other Linux (ARM 64-bit) |
+| System → EFI | **Enable EFI** |
+| Memory | 1024 MB |
+| Storage | Optical → `out/luna-0.1.0-aarch64.iso` |
+| Disk | не обязателен (live) |
 
-После первой успешной загрузки — **Snapshot** «M0 clean boot».
+**Login:** `root`, пароль пустой (Enter).
+
+### QEMU
+
+```bash
+./scripts/test-qemu.sh aarch64
+```
+
+На aarch64 скрипт открывает окно с `-display cocoa` (virtio-gpu). Для x86_64 — serial console (`-serial stdio`).
 
 ## Отладка
 
-- **Не грузится:** проверить, что ISO bootable; смотреть QEMU с `-d guest_errors`
-- **Kernel panic:** несовместимость initramfs/kernel — сверить версии Alpine packages
-- **Нет сети:** ожидаемо на M0; сеть — фаза 1
+| Симптом | Что проверить |
+|---------|----------------|
+| `Mounting boot media failed` | структура ISO: `apks/.boot_repository`, подписанный `APKINDEX` |
+| `UNTRUSTED signature` | ключ `luna@local.rsa.pub` в overlay и подпись с `-p` |
+| `package mentioned in index not found` | apkovl не должен содержать online `repositories` |
+| `can't open /dev/ttyAMA0` | используй ISO с `console=tty0` (без getty на AMA0) |
+| `Login incorrect` | пароль пустой, не `root` |
+| Два login prompt / выброс из сессии | дублирование getty (inittab + OpenRC agetty) |
 
 ## Что не нужно на старте
 
-- Кросс-компилятор `x86_64-elf-gcc` (это для kernel dev, не для distro)
-- Полный Alpine build tree (abuild все пакетов)
-- GUI на хосте кроме VM viewer
+- Кросс-компилятор kernel (`x86_64-elf-gcc`)
+- Полный Alpine build tree
+- Сеть внутри гостя (фаза 1)

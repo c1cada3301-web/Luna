@@ -1,25 +1,24 @@
 #!/bin/bash
 # Собирает rootfs — корневую файловую систему Luna.
-# Результат: work/rootfs/ (нужен build-iso.sh для упаковки в ISO)
+# LUNA_ARCH: x86_64 (default) | aarch64
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ROOTFS="$ROOT/work/rootfs"
+LUNA_ARCH="${LUNA_ARCH:-x86_64}"
+WORKDIR="$ROOT/work/${LUNA_ARCH}"
+ROOTFS="$WORKDIR/rootfs"
 
-echo "==> Создаём rootfs в $ROOTFS"
+echo "==> Создаём rootfs ($LUNA_ARCH) в $ROOTFS"
 
 rm -rf "$ROOTFS"
 mkdir -p "$ROOTFS/etc/apk/keys"
 
-# Ключи и репозитории — без них apk выдаст UNTRUSTED signature
 cp -a /etc/apk/keys/. "$ROOTFS/etc/apk/keys/"
 cp /etc/apk/repositories "$ROOTFS/etc/apk/repositories"
 
-# Инициализация базы пакетов внутри будущей ОС
 apk add --root "$ROOTFS" --initdb --repositories-file /etc/apk/repositories
 
-# Базовые пакеты: скелет системы, init, login, ядро
 apk add --root "$ROOTFS" --repositories-file /etc/apk/repositories \
     alpine-base \
     alpine-conf \
@@ -31,7 +30,6 @@ apk add --root "$ROOTFS" --repositories-file /etc/apk/repositories \
     mkinitfs \
     tzdata
 
-# Дополнительные пакеты из packages.txt
 if [ -f "$ROOT/build/packages.txt" ]; then
     grep -v '^#' "$ROOT/build/packages.txt" | grep -v '^[[:space:]]*$' | while read -r pkg; do
         echo "    + $pkg"
@@ -39,18 +37,35 @@ if [ -f "$ROOT/build/packages.txt" ]; then
     done
 fi
 
-# Брендинг Luna: hostname, motd, issue, luna-release
 cp -a "$ROOT/overlay/." "$ROOTFS/"
 
-# Настройка внутри будущей ОС
+configure_inittab() {
+    # Только tty1 — serial-консоли добавит initramfs (setup_inittab_console),
+    # если устройство реально доступно (stty), без спама в VirtualBox.
+    cat > "$ROOTFS/etc/inittab" <<'EOF'
+# /etc/inittab — Luna (OpenRC + agetty)
+
+::sysinit:/sbin/openrc sysinit
+::sysinit:/sbin/openrc boot
+::wait:/sbin/openrc default
+
+tty1::respawn:/sbin/agetty --noclear 38400 tty1 linux
+
+::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/openrc shutdown
+EOF
+}
+
+configure_inittab
+
 chroot "$ROOTFS" /bin/sh <<'CHROOT'
 setup-timezone -i UTC
+passwd -d root >/dev/null 2>&1 || true
 
 rc-update add devfs sysinit
 rc-update add dmesg sysinit
 rc-update add mdev sysinit
 rc-update add hwdrivers sysinit
-rc-update add modloop sysinit
 rc-update add sysctl sysinit
 rc-update add hostname boot
 rc-update add bootmisc boot
@@ -58,10 +73,6 @@ rc-update add syslog boot
 rc-update add mount-ro shutdown
 rc-update add killprocs shutdown
 rc-update add savecache shutdown
-
-if [ -f /etc/init.d/agetty ]; then
-    rc-update add agetty default
-fi
 CHROOT
 
 KV="$(ls "$ROOTFS/lib/modules")"

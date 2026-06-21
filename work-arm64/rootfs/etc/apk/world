@@ -1,0 +1,11 @@
+agetty
+alpine-base
+alpine-conf
+alpine-release
+bash
+busybox-openrc
+linux-virt
+mkinitfs
+nano
+openrc
+tzdata

@@ -2,95 +2,82 @@
 
 ## Цель
 
-Собрать **`luna-0.1.0.iso`**, который:
+Собрать **`luna-0.1.0`**, который:
 
-1. Загружается в VirtualBox или QEMU (x86_64)
-2. Показывает login prompt
-3. После входа — shell с сообщением Luna (motd)
+1. Загружается в VirtualBox (Apple Silicon, ARM64) или QEMU
+2. Показывает login prompt с брендингом Luna
+3. После входа — shell и motd «Welcome to Luna»
 4. `cat /etc/luna-release` выводит версию
 
 ## Definition of Done
 
-- [ ] Скрипт сборки запускается одной командой из README/build
-- [ ] ISO < 200 MB (ориентир для minimal Alpine)
-- [ ] Загрузка без kernel panic в VirtualBox
-- [ ] Hostname: `luna`
-- [ ] Файл `/etc/luna-release` существует
+- [x] Скрипт сборки запускается одной командой (`docker compose run …`)
+- [x] ISO < 200 MB (~83 MB для aarch64)
+- [x] Загрузка без kernel panic в VirtualBox
+- [x] Hostname: `luna`
+- [x] Файл `/etc/luna-release` существует
+- [x] Login: `root` / пустой пароль
 
-## Шаги реализации
+**Статус: закрыт** (июнь 2026)
 
-### 1. Окружение сборки
+## Что реализовано
 
-На Mac:
+### Pipeline сборки
 
-```bash
-# Docker для Linux-сборки
-docker --version
+1. **`build/build-rootfs.sh`** — `apk --root`, overlay, OpenRC, `mkinitfs`
+2. **`build/build-iso.sh`** — modloop, локальный apk-репозиторий на ISO, подпись `APKINDEX`, `localhost.apkovl.tar.gz`, упаковка ISO
+3. **`docker-compose.yml`** — `luna-build-aarch64` и `luna-build-x86_64`
 
-# QEMU для быстрого теста (опционально на M0)
-brew install qemu
-```
+### Boot-модель (Alpine diskless live)
 
-Подробнее: [development-environment.md](development-environment.md)
+Initramfs монтирует ISO, устанавливает пакеты из локального репозитория (`apks/.boot_repository`), распаковывает `localhost.apkovl.tar.gz`, делает `switch_root`.
 
-### 2. Rootfs на базе Alpine
+Важные детали, выработанные при отладке:
 
-Два рабочих подхода (выберем один при реализации):
+| Решение | Зачем |
+|---------|--------|
+| Подпись `APKINDEX` ключом `luna@local` | initramfs отклонял неподписанный индекс |
+| Без `etc/apk/repositories` в apkovl | иначе при сети в VM apk тянет CDN и ломается |
+| `modloop=none` в cmdline | модули уже в rootfs через apk; modloop на VB ARM падал |
+| `console=tty0` (без ttyAMA0) | VirtualBox ARM не имеет serial-консоли |
+| Inittab: только `tty1` + agetty | без дублирования getty (OpenRC + inittab) |
+| `/root` в apkovl | иначе login не находил home directory |
 
-**A. Alpine `mkimage` (официальный путь для live/rescue ISO)**
-
-Используется в Alpine Linux для создания образов. Требует Alpine build environment (Docker с образом `alpine`).
-
-**B. Ручной chroot через `apk`**
-
-```bash
-# Псевдокод pipeline — будет в build/build-rootfs.sh
-apk add --root ./rootfs --initdb alpine-base alpine-conf ...
-cp -r overlay/* ./rootfs/
-```
-
-### 3. Overlay Luna
-
-Минимальный набор файлов:
+### Overlay Luna
 
 | Файл | Содержимое |
 |------|------------|
 | `/etc/hostname` | `luna` |
-| `/etc/issue` | `Luna 0.1.0\n` |
-| `/etc/motd` | Приветствие + ссылка на docs |
+| `/etc/issue` | версия + подсказка login/password |
+| `/etc/motd` | `Welcome to Luna` |
 | `/etc/luna-release` | `LUNA_VERSION=0.1.0` |
+| `/etc/apk/keys/luna@local.rsa.pub` | публичный ключ локального репозитория |
 
-### 4. Упаковка ISO
+### Dual-arch
 
-- Bootloader: extlinux/isolinux (стандарт для Alpine live)
-- Output: `out/luna-0.1.0.iso`
+| Архитектура | Bootloader | ISO |
+|-------------|------------|-----|
+| `aarch64` | GRUB UEFI | `out/luna-0.1.0-aarch64.iso` |
+| `x86_64` | syslinux BIOS | `out/luna-0.1.0-x86_64.iso` |
 
-### 5. Тест
+## Тест
 
-**QEMU:**
+### VirtualBox (Apple Silicon)
+
+| Параметр | Значение |
+|----------|----------|
+| Type | Other Linux **(ARM 64-bit)** |
+| EFI | **ON** |
+| Memory | 1024 MB |
+| ISO | `out/luna-0.1.0-aarch64.iso` |
+
+### QEMU
 
 ```bash
-qemu-system-x86_64 \
-  -cdrom out/luna-0.1.0.iso \
-  -m 512 \
-  -serial stdio
+./scripts/test-qemu.sh aarch64   # окно с virtio-gpu (macOS)
+./scripts/test-qemu.sh x86_64    # serial console
 ```
-
-**VirtualBox:**
-
-1. New VM → Linux → Other Linux (64-bit)
-2. RAM 512 MB–1 GB
-3. Storage → attach ISO
-4. Boot → login
-
-## Риски
-
-| Риск | Митигация |
-|------|-----------|
-| Сборка Alpine ISO на Mac | Docker с Linux |
-| Apple Silicon + VirtualBox медленный | QEMU для dev; UTM как альтернатива |
-| Забытые зависости в rootfs | Явный `packages.txt`, CI позже |
 
 ## После M0
 
-Переход к [Фазе 1](roadmap.md#фаза-1--минимально-живая-система): сеть и `apk add` внутри гостя.
+Переход к [Фазе 1](roadmap.md#фаза-1--минимально-живая-система): сеть, чистая загрузка без предупреждений, persistent disk.
