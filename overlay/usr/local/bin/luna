@@ -123,7 +123,8 @@ Commands:
   status          system overview (network, persist, services)
   think [sec]     moon phase animation (agent preview, default 5s)
   install         install Luna to disk (live ISO only, root)
-  upgrade         update system packages (apk upgrade, root)
+  upgrade         update Luna release + Alpine packages (root, network)
+  self-update     update Luna CLI/scripts from GitHub only (root)
   help, -h        this message
   tui             simple interactive menu
 
@@ -170,6 +171,22 @@ EOF
 	printf '  apk repos:     switched to CDN Alpine v%s\n' "$ver"
 }
 
+cmd_self_update() {
+	if [ "$(id -u)" -ne 0 ]; then
+		echo "luna self-update requires root — run: sudo luna self-update" >&2
+		exit 1
+	fi
+	if ! command -v bash >/dev/null 2>&1; then
+		echo "luna self-update requires bash" >&2
+		exit 1
+	fi
+	if [ ! -x "$LUNA_SHARE/luna-self-update.sh" ]; then
+		echo "luna self-update: script not found" >&2
+		exit 1
+	fi
+	exec bash "$LUNA_SHARE/luna-self-update.sh"
+}
+
 cmd_upgrade() {
 	if [ "$(id -u)" -ne 0 ]; then
 		echo "luna upgrade requires root — run: sudo luna upgrade" >&2
@@ -191,16 +208,20 @@ cmd_upgrade() {
 	printf '  kernel:        %s\n\n' "$kernel_before"
 
 	if [ "$boot" = "live (ISO)" ]; then
-		printf 'Note: live ISO — apk upgrades are lost after reboot.\n'
+		printf 'Note: live ISO — updates are lost after reboot.\n'
 		printf '      Install to disk: sudo luna install\n\n'
+	fi
+
+	if command -v bash >/dev/null 2>&1 && [ -x "$LUNA_SHARE/luna-self-update.sh" ]; then
+		bash "$LUNA_SHARE/luna-self-update.sh" || true
 	fi
 
 	_ensure_cdn_repos
 
-	printf 'Updating package index...\n'
+	printf 'Updating Alpine package index...\n'
 	apk update || exit 1
 
-	printf 'Upgrading packages...\n'
+	printf 'Upgrading Alpine packages...\n'
 	apk upgrade || exit 1
 
 	load_release
@@ -215,7 +236,6 @@ cmd_upgrade() {
 	fi
 	printf '\n'
 	printf '  packages:      %s installed\n' "$pkg_count"
-	printf '  note:          Luna release = ISO version; use new ISO/scp for Luna OS updates\n'
 	if [ "$kernel_before" != "$kernel_after" ]; then
 		printf '  kernel:        %s → %s (reboot recommended)\n' "$kernel_before" "$kernel_after"
 	elif apk info -e linux-virt linux-lts 2>/dev/null | grep -q .; then
@@ -239,6 +259,7 @@ main() {
 		think)                cmd_think "${2:-5}" ;;
 		install)              cmd_install ;;
 		upgrade)              cmd_upgrade ;;
+		self-update)          cmd_self_update ;;
 		tui|menu)             cmd_tui ;;
 		"")                   cmd_welcome ;;
 		*)

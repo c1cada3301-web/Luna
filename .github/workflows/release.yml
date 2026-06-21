@@ -80,11 +80,16 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Userspace bundle
+        run: |
+          chmod +x scripts/bundle-userspace.sh
+          ./scripts/bundle-userspace.sh release-assets
+
       - name: Checksums
         run: |
           cd release-assets
-          sha256sum luna-*.iso > SHA256SUMS
-          ls -lh luna-*.iso SHA256SUMS
+          sha256sum luna-* > SHA256SUMS
+          ls -lh luna-* SHA256SUMS
 
       - name: Release notes
         run: |

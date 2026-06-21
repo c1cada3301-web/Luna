@@ -14,7 +14,7 @@ while true; do
 	choices=(
 		"Status"
 		"Version"
-		"Upgrade (root)"
+		"Upgrade Luna + Alpine (root)"
 		"Help"
 		"Think (demo)"
 		"Install to disk (root)"

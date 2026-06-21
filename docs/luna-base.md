@@ -38,7 +38,7 @@ sudo luna install
 | | Обновление |
 |---|-----------|
 | Alpine (`python3`, kernel, …) | `sudo luna upgrade` / `apk upgrade` |
-| Luna release (`/etc/luna-release`, CLI) | новый ISO + `luna install`, scp overlay, или будущий apk `luna-base` |
+| Luna release (CLI, scripts, motd) | `sudo luna upgrade` — GitHub Releases `luna-*-userspace.tar.gz` |
 
 ## Будущее (5.4)
 

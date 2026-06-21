@@ -4,11 +4,11 @@
 
 ## Статус
 
-**Luna 0.8.0 — фаза 5.3 (bare metal)** (июнь 2026)
+**Luna 0.8.1 — фаза 5.3 (bare metal)** (июнь 2026)
 
 - **`luna install`** → **linux-lts** + **linux-firmware** на диск (live ISO остаётся virt)
-- **`luna upgrade`** — Alpine-пакеты; Luna release — через ISO/scp
-- Проверено: VirtualBox ARM64 install → SSH → `apk add` persist → 0.7.0
+- **`sudo luna upgrade`** — Luna release с GitHub + Alpine-пакеты одной командой
+- Проверено: VirtualBox ARM64 install → SSH → `apk add` persist → upgrade
 
 ## Быстрый старт
 
@@ -58,7 +58,7 @@ luna status
 luna think 5            # animation demo
 luna help
 sudo luna install       # install to virtual disk (add SATA disk ≥8 GB first)
-sudo luna upgrade       # update packages (installed system)
+sudo luna upgrade       # Luna release + Alpine packages (needs network)
 ```
 
 Prompt: `◐ luna:~$` (фиолетово-синий).

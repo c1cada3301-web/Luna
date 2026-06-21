@@ -54,12 +54,12 @@ Welcome (`luna`), `luna think`, SSH для dev. **0.5.0**
 |---|--------|--------|
 | 1 | Root ext4 на диске | ✅ |
 | 2 | CDN apk repos | ✅ |
-| 3 | `luna upgrade` | ✅ 0.7.0 |
+| 3 | `luna upgrade` (Luna + Alpine) | ✅ 0.8.1 |
 | 4 | SSH / `LUNA_MODE=installed` | ✅ |
 | 5 | Профили пакетов | ✅ [luna-base.md](luna-base.md) |
 | 6 | `apk add` после reboot | ✅ python3 |
 
-**Milestone 5.2** — проверено на установленной VM: upgrade, SSH с Mac, persist.
+**Milestone 5.2** — проверено на установленной VM: upgrade, SSH с Mac, persist. **0.8.1:** self-update с GitHub Releases.
 
 ### 5.3 — Bare metal ← **СЕЙЧАС**
 

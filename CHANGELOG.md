@@ -2,6 +2,20 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.1] — 2026-06-21
+
+### Added
+
+- **`luna upgrade`** — одна команда: Luna release с GitHub Releases + `apk upgrade`
+- **`luna self-update`** — только userspace (CLI, scripts, motd) с GitHub
+- `luna-VERSION-userspace.tar.gz` в релизах; `scripts/bundle-userspace.sh`
+- `overlay/usr/share/luna/luna-self-update.sh` — API GitHub, сохранение `LUNA_MODE=installed`
+
+### Changed
+
+- Релизный workflow и `release-local.sh` публикуют userspace bundle
+- README: `sudo luna upgrade` обновляет и Luna, и Alpine
+
 ## [0.8.0] — 2026-06-21
 
 ### Added

@@ -34,6 +34,12 @@ for f in "$ISO_A" "$ISO_X"; do
 	[ -f "$f" ] || { echo "Missing $f"; exit 1; }
 done
 
+echo "==> Userspace bundle"
+chmod +x scripts/bundle-userspace.sh
+./scripts/bundle-userspace.sh out
+USERSPACE="out/luna-${VERSION}-userspace.tar.gz"
+[ -f "$USERSPACE" ] || { echo "Missing $USERSPACE"; exit 1; }
+
 NOTES="$(mktemp)"
 awk -v ver="$VERSION" '
 	$0 ~ "^## \\[" ver "\\]" { show=1; next }
@@ -42,7 +48,7 @@ awk -v ver="$VERSION" '
 ' CHANGELOG.md > "$NOTES"
 
 CHECKSUMS="$(mktemp)"
-(cd out && sha256sum "luna-${VERSION}"-*.iso > "$CHECKSUMS")
+(cd out && sha256sum "luna-${VERSION}"-* > "$CHECKSUMS")
 
 if git rev-parse "$TAG" >/dev/null 2>&1; then
 	echo "Tag $TAG exists"
@@ -52,9 +58,9 @@ fi
 
 if gh release view "$TAG" >/dev/null 2>&1; then
 	echo "Release $TAG exists — uploading assets"
-	gh release upload "$TAG" "$ISO_A" "$ISO_X" "$CHECKSUMS" --clobber
+	gh release upload "$TAG" "$ISO_A" "$ISO_X" "$USERSPACE" "$CHECKSUMS" --clobber
 else
-	gh release create "$TAG" "$ISO_A" "$ISO_X" "$CHECKSUMS" \
+	gh release create "$TAG" "$ISO_A" "$ISO_X" "$USERSPACE" "$CHECKSUMS" \
 		--title "Luna ${VERSION}" \
 		--notes-file "$NOTES" \
 		--latest

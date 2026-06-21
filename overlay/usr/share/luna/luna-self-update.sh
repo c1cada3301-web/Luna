@@ -1,0 +1,171 @@
+#!/bin/bash
+# Fetch latest Luna userspace from GitHub Releases and apply to /.
+# Called by: luna upgrade, luna self-update
+
+set -euo pipefail
+
+LUNA_SHARE="${LUNA_SHARE:-/usr/share/luna}"
+
+load_release() {
+	if [ -r /etc/luna-release ]; then
+		# shellcheck disable=SC1091
+		. /etc/luna-release
+	fi
+}
+
+load_github_config() {
+	LUNA_GITHUB_REPO="${LUNA_GITHUB_REPO:-c1cada3301-web/Luna}"
+	if [ -r /etc/luna/github.conf ]; then
+		# shellcheck disable=SC1091
+		. /etc/luna/github.conf
+	fi
+}
+
+version_lt() {
+	# true if $1 < $2 (X.Y.Z, no sort -V — BusyBox-safe)
+	local IFS=.
+	local i a b av bv
+	read -r -a a <<< "$1"
+	read -r -a b <<< "$2"
+	for i in 0 1 2; do
+		av="${a[$i]:-0}"
+		bv="${b[$i]:-0}"
+		case "$av" in
+			*[!0-9]*) av=0 ;;
+		esac
+		case "$bv" in
+			*[!0-9]*) bv=0 ;;
+		esac
+		if [ "$av" -lt "$bv" ]; then return 0; fi
+		if [ "$av" -gt "$bv" ]; then return 1; fi
+	done
+	return 1
+}
+
+strip_v() {
+	printf '%s' "$1" | sed 's/^v//'
+}
+
+github_latest_tag() {
+	local api="https://api.github.com/repos/${LUNA_GITHUB_REPO}/releases/latest"
+	local json tag
+
+	if ! json="$(curl -fsSL --connect-timeout 15 --max-time 60 "$api" 2>/dev/null)"; then
+		echo "failed to fetch $api" >&2
+		return 1
+	fi
+
+	tag="$(printf '%s' "$json" | grep '"tag_name"' | head -1 | cut -d'"' -f4)"
+	[ -n "$tag" ] || { echo "no tag_name in release JSON" >&2; return 1; }
+	printf '%s' "$tag"
+}
+
+github_userspace_url() {
+	local tag="$1"
+	local ver api json url want
+
+	ver="$(strip_v "$tag")"
+	want="luna-${ver}-userspace.tar.gz"
+	api="https://api.github.com/repos/${LUNA_GITHUB_REPO}/releases/tags/${tag}"
+
+	if ! json="$(curl -fsSL --connect-timeout 15 --max-time 60 "$api" 2>/dev/null)"; then
+		echo "failed to fetch release $tag" >&2
+		return 1
+	fi
+
+	url="$(printf '%s' "$json" | grep '"browser_download_url"' | grep "$want" | head -1 | cut -d'"' -f4)"
+	[ -n "$url" ] || {
+		echo "release $tag has no asset $want (need Luna 0.8.1+)" >&2
+		return 1
+	}
+	printf '%s' "$url"
+}
+
+preserve_installed_mode() {
+	local mode
+	mode="$(grep '^LUNA_MODE=' /etc/luna-release 2>/dev/null | cut -d= -f2 || true)"
+	if [ "$mode" = "installed" ]; then
+		if grep -q '^LUNA_MODE=' /etc/luna-release; then
+			sed -i 's/^LUNA_MODE=.*/LUNA_MODE=installed/' /etc/luna-release
+		else
+			printf '\nLUNA_MODE=installed\n' >> /etc/luna-release
+		fi
+	fi
+}
+
+fix_permissions() {
+	chmod +x /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
+	chmod +x /usr/share/luna/*.sh 2>/dev/null || true
+	chmod +x /etc/local.d/*.start 2>/dev/null || true
+	chmod +x /etc/init.d/luna-agent 2>/dev/null || true
+}
+
+apply_userspace() {
+	local url="$1" tmpdir archive
+
+	tmpdir="$(mktemp -d)"
+	trap 'rm -rf "$tmpdir"' RETURN
+	archive="$tmpdir/userspace.tar.gz"
+
+	printf '  downloading %s\n' "$(basename "$url")"
+	curl -fsSL --connect-timeout 15 --max-time 300 -o "$archive" "$url"
+
+	printf '  extracting to /\n'
+	tar -xzf "$archive" -C /
+	preserve_installed_mode
+	fix_permissions
+}
+
+# Returns 0 if an update was applied, 1 if already current, 2 on skip/error.
+luna_self_update() {
+	local current latest latest_ver tag url
+
+	if [ "$(id -u)" -ne 0 ]; then
+		echo "luna self-update requires root" >&2
+		return 2
+	fi
+	if ! command -v curl >/dev/null 2>&1; then
+		echo "luna self-update: curl not found" >&2
+		return 2
+	fi
+
+	load_release
+	load_github_config
+	current="${LUNA_VERSION:-0.0.0}"
+
+	printf 'Checking Luna release (GitHub: %s)...\n' "$LUNA_GITHUB_REPO"
+
+	if ! tag="$(github_latest_tag)"; then
+		printf '  skip: could not reach GitHub — Alpine upgrade only\n\n'
+		return 2
+	fi
+
+	latest_ver="$(strip_v "$tag")"
+	printf '  current:  %s\n' "$current"
+	printf '  latest:   %s (%s)\n' "$latest_ver" "$tag"
+
+	if [ "$current" = "$latest_ver" ]; then
+		printf '  Luna:     already up to date\n\n'
+		return 1
+	fi
+
+	if version_lt "$latest_ver" "$current"; then
+		printf '  Luna:     local %s is newer than release %s — skip\n\n' "$current" "$latest_ver"
+		return 1
+	fi
+
+	if ! url="$(github_userspace_url "$tag")"; then
+		printf '  skip: no userspace bundle on %s — Alpine upgrade only\n\n' "$tag"
+		return 2
+	fi
+
+	printf '\nUpdating Luna userspace %s → %s\n' "$current" "$latest_ver"
+	apply_userspace "$url"
+	printf '  Luna:     updated to %s\n\n' "$latest_ver"
+	return 0
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	luna_self_update
+	exit $?
+fi
