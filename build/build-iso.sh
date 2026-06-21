@@ -30,10 +30,25 @@ prepare_alpine_iso_tree() {
     echo "==> Скачиваем APK-пакеты ($apk_arch)"
     mkdir -p "$apks_dir"
     touch "$ISODIR/apks/.boot_repository"
+
+    # luna-base — локальный пакет, не на CDN; копируем из bundled repo
+    fetch_pkgs="$(apk info --root "$ROOTFS" -q | grep -v '^luna-base$' | sort -u)"
     apk fetch --root "$ROOTFS" -R \
         --repositories-file /etc/apk/repositories \
         -o "$apks_dir" \
-        $(apk info --root "$ROOTFS" -q | sort -u)
+        $fetch_pkgs
+
+    if apk info --root "$ROOTFS" -e luna-base >/dev/null 2>&1; then
+        luna_apk="$(find "$ROOTFS/usr/share/luna/apk-repo/$apk_arch" \
+            -maxdepth 1 -name 'luna-base-*.apk' -print -quit 2>/dev/null || true)"
+        if [ -n "$luna_apk" ]; then
+            cp -a "$luna_apk" "$apks_dir/"
+            echo "    + luna-base (local repo → ISO apks)"
+        else
+            echo "ERROR: luna-base installed but apk missing under usr/share/luna/apk-repo/$apk_arch" >&2
+            exit 1
+        fi
+    fi
 
     echo "==> Создаём и подписываем APKINDEX.tar.gz"
     rm -f "$apks_dir/APKINDEX.tar.gz"

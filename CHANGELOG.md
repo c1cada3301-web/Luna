@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.1] — 2026-06-21
+
+### Fixed
+
+- **ISO build:** `apk fetch` не находил `luna-base` на CDN — копируем `.apk` из bundled repo в boot apks
+
 ## [0.9.0] — 2026-06-21
 
 ### Added
