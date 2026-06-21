@@ -139,8 +139,7 @@ installed_luna_ver() {
 }
 
 preserve_installed_mode() {
-	local mode
-	mode="$(grep '^LUNA_MODE=' /etc/luna-release 2>/dev/null | cut -d= -f2 || true)"
+	local mode="$1"
 	if [ "$mode" = "installed" ]; then
 		if grep -q '^LUNA_MODE=' /etc/luna-release; then
 			sed -i 's/^LUNA_MODE=.*/LUNA_MODE=installed/' /etc/luna-release
@@ -150,8 +149,22 @@ preserve_installed_mode() {
 	fi
 }
 
+sync_luna_release_version() {
+	local ver
+	ver="$(apk info -e luna-base 2>/dev/null | sed 's/^luna-base-//; s/-r[0-9]*$//')"
+	[ -n "$ver" ] || return 0
+	if [ -f /etc/luna-release ] && grep -q '^LUNA_VERSION=' /etc/luna-release; then
+		sed -i "s/^LUNA_VERSION=.*/LUNA_VERSION=${ver}/" /etc/luna-release
+	fi
+}
+
+remove_tarball_luna_bins() {
+	# tar.gz userspace installs here; apk uses /usr/bin — drop stale copies from PATH
+	rm -f /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
+}
+
 fix_permissions() {
-	chmod +x /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
+	remove_tarball_luna_bins
 	chmod +x /usr/bin/luna /usr/bin/luna-help 2>/dev/null || true
 	chmod +x /usr/share/luna/*.sh 2>/dev/null || true
 	chmod +x /etc/local.d/*.start 2>/dev/null || true
@@ -159,12 +172,14 @@ fix_permissions() {
 }
 
 apply_luna_base_apk() {
-	local url="$1" tmpdir apk
+	local url="$1" tmpdir apk luna_mode
 
 	if ! command -v apk >/dev/null 2>&1; then
 		echo "apk not found" >&2
 		return 1
 	fi
+
+	luna_mode="$(grep '^LUNA_MODE=' /etc/luna-release 2>/dev/null | cut -d= -f2 || true)"
 
 	tmpdir="$(mktemp -d)"
 	# Literal path in trap — local tmpdir is unset before RETURN trap runs (set -u)
@@ -182,14 +197,17 @@ apply_luna_base_apk() {
 
 	printf '  installing %s\n' "$(basename "$apk")"
 	apk add --force-overwrite --allow-untrusted "$apk"
-	preserve_installed_mode
+	sync_luna_release_version
+	preserve_installed_mode "$luna_mode"
 	fix_permissions
 	trap - RETURN
 	rm -rf "$tmpdir"
 }
 
 apply_userspace() {
-	local url="$1" tmpdir archive
+	local url="$1" tmpdir archive luna_mode
+
+	luna_mode="$(grep '^LUNA_MODE=' /etc/luna-release 2>/dev/null | cut -d= -f2 || true)"
 
 	tmpdir="$(mktemp -d)"
 	trap "rm -rf '$tmpdir'" RETURN
@@ -200,7 +218,7 @@ apply_userspace() {
 
 	printf '  extracting to /\n'
 	tar -xzf "$archive" -C /
-	preserve_installed_mode
+	preserve_installed_mode "$luna_mode"
 	fix_permissions
 	trap - RETURN
 	rm -rf "$tmpdir"

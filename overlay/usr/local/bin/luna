@@ -12,6 +12,15 @@ load_release() {
 	fi
 }
 
+_luna_installed_ver() {
+	if pkg="$(apk info -e luna-base 2>/dev/null)" && [ -n "$pkg" ]; then
+		printf '%s' "$pkg" | sed 's/^luna-base-//; s/-r[0-9]*$//'
+		return 0
+	fi
+	load_release
+	printf '%s' "${LUNA_VERSION:-unknown}"
+}
+
 cmd_version() {
 	load_release
 	printf 'Luna %s\n' "${LUNA_VERSION:-unknown}"
@@ -199,8 +208,7 @@ cmd_upgrade() {
 		exit 1
 	fi
 
-	load_release
-	ver_before="${LUNA_VERSION:-unknown}"
+	ver_before="$(_luna_installed_ver)"
 	boot="$(_boot_mode)"
 	kernel_before="$(uname -r)"
 
@@ -226,8 +234,7 @@ cmd_upgrade() {
 	printf 'Upgrading Alpine packages...\n'
 	apk upgrade || exit 1
 
-	load_release
-	ver_after="${LUNA_VERSION:-unknown}"
+	ver_after="$(_luna_installed_ver)"
 	kernel_after="$(uname -r)"
 	pkg_count="$(apk info -I 2>/dev/null | wc -l | tr -d ' ')"
 

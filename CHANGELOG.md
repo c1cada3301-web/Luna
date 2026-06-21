@@ -2,6 +2,14 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.7] — 2026-06-21
+
+### Fixed
+
+- **Миграция tar.gz → luna-base apk:** удаление `/usr/local/bin/luna` (PATH отдавал старую копию)
+- **`/etc/luna-release`:** явная синхронизация `LUNA_VERSION` из `apk info luna-base` после установки
+- **`LUNA_MODE=installed`:** сохраняется до `apk add`, а не после (когда пакет уже перезаписал файл)
+
 ## [0.8.6] — 2026-06-21
 
 ### Fixed

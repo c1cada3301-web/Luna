@@ -1,7 +1,7 @@
 # Maintainer: Luna <luna@example.com>
 # Luna userspace — built from overlay/ (pkgver patched by scripts/build-apk-repo.sh)
 pkgname=luna-base
-pkgver=0.8.6
+pkgver=0.8.7
 pkgrel=0
 pkgdesc="Luna OS userspace (CLI, scripts, branding)"
 url="https://github.com/c1cada3301-web/Luna"
@@ -47,4 +47,8 @@ package() {
 	chmod +x "$pkgdir"/usr/share/luna/*.sh 2>/dev/null || true
 	chmod +x "$pkgdir"/etc/local.d/*.start 2>/dev/null || true
 	chmod +x "$pkgdir"/etc/init.d/luna-agent 2>/dev/null || true
+}
+
+post_install() {
+	rm -f /usr/local/bin/luna /usr/local/bin/luna-help 2>/dev/null || true
 }
