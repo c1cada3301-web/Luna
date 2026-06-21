@@ -2,6 +2,14 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.4] — 2026-06-21
+
+### Fixed
+
+- **`setup-apkrepos.start`:** `command -v` не видит shell-функции в ash — bundled repo не поднимался при boot
+- **`luna install`:** `prepare_live_for_setup_alpine` — repo + `apk update`, repair `luna-base` из local, strip world, die если world не очистился
+- **Rootfs build:** fail если `luna-base` остаётся в world после сборки
+
 ## [0.9.3] — 2026-06-21
 
 ### Fixed

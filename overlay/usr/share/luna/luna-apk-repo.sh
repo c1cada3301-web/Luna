@@ -29,6 +29,56 @@ ensure_luna_apk_repo_in_repositories() {
 	printf '%s\n' "$line" >> /etc/apk/repositories
 }
 
+ensure_bundled_luna_apk_repo_in_repositories() {
+	luna_apk_repo_bundled_present || return 1
+	if grep -qxF "$LUNA_APK_REPO_BUNDLED" /etc/apk/repositories 2>/dev/null; then
+		return 0
+	fi
+	printf '%s\n' "$LUNA_APK_REPO_BUNDLED" >> /etc/apk/repositories
+}
+
+strip_luna_base_from_world() {
+	local w
+	for w in /etc/apk/world /var/lib/apk/world; do
+		[ -f "$w" ] || continue
+		sed -i '/^luna-base/d' "$w"
+	done
+}
+
+luna_base_in_world() {
+	grep -q '^luna-base' /etc/apk/world /var/lib/apk/world 2>/dev/null
+}
+
+# Live ISO: local repo + indexes before any setup-alpine apk add.
+ensure_luna_apk_repos_live() {
+	if ! luna_apk_repo_present 2>/dev/null; then
+		install_bundled_luna_apk_repo 2>/dev/null || true
+	fi
+	ensure_luna_apk_repo_in_repositories 2>/dev/null || true
+	ensure_bundled_luna_apk_repo_in_repositories 2>/dev/null || true
+	apk update || return 1
+	return 0
+}
+
+prepare_live_for_setup_alpine() {
+	local apk_file
+
+	ensure_luna_apk_repos_live || die "apk update failed — check /etc/apk/repositories"
+
+	if luna_base_in_world; then
+		apk_file="$(luna_base_apk_file 2>/dev/null || true)"
+		[ -n "$apk_file" ] || apk_file="$(find "$LUNA_APK_REPO_BUNDLED" "$LUNA_APK_REPO_ROOT" \
+			-name 'luna-base-*.apk' 2>/dev/null | head -1)"
+		if [ -n "$apk_file" ]; then
+			apk add --force-overwrite luna-base 2>/dev/null || \
+				apk add --force-overwrite --allow-untrusted "$apk_file" 2>/dev/null || true
+		fi
+	fi
+
+	strip_luna_base_from_world
+	luna_base_in_world && die "luna-base still in apk world — reboot live ISO or use Luna 0.9.4+"
+}
+
 extract_luna_apk_repo() {
 	local tarball="$1"
 	[ -n "$tarball" ] && [ -f "$tarball" ] || return 1

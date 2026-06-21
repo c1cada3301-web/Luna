@@ -41,8 +41,14 @@ echo "==> Installing luna-base ${LUNA_VERSION} into rootfs (apk)"
 apk add --root "$ROOTFS" --repositories-file "$repos_file" --force-overwrite luna-base
 
 # Files stay on rootfs; drop from world so live setup-alpine does not require luna-base from CDN.
-sed -i '/^luna-base$/d' "$ROOTFS/etc/apk/world" 2>/dev/null || true
-sed -i '/^luna-base$/d' "$ROOTFS/var/lib/apk/world" 2>/dev/null || true
+for w in "$ROOTFS/etc/apk/world" "$ROOTFS/var/lib/apk/world"; do
+	[ -f "$w" ] || continue
+	sed -i '/^luna-base/d' "$w"
+done
+if grep -q '^luna-base' "$ROOTFS/etc/apk/world" "$ROOTFS/var/lib/apk/world" 2>/dev/null; then
+	echo "install-luna-base-rootfs: luna-base still in apk world" >&2
+	exit 1
+fi
 
 rm -f "$ROOTFS/usr/local/bin/luna" "$ROOTFS/usr/local/bin/luna-help" 2>/dev/null || true
 chmod +x "$ROOTFS"/usr/bin/luna "$ROOTFS"/usr/bin/luna-help 2>/dev/null || true

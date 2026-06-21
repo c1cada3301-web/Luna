@@ -181,18 +181,10 @@ confirm_install() {
 
 prepare_setup_alpine() {
 	local repo_sh="${LUNA_SHARE:-/usr/share/luna}/luna-apk-repo.sh"
-	# setup-* scripts run apk on live; luna-base is not on CDN.
-	if [ -r "$repo_sh" ]; then
-		# shellcheck disable=SC1091
-		. "$repo_sh"
-		if ! luna_apk_repo_present 2>/dev/null; then
-			install_bundled_luna_apk_repo 2>/dev/null || true
-		fi
-		ensure_luna_apk_repo_in_repositories 2>/dev/null || true
-	fi
-	sed -i '/^luna-base$/d' /etc/apk/world 2>/dev/null || true
-	sed -i '/^luna-base$/d' /var/lib/apk/world 2>/dev/null || true
-	apk update --quiet 2>/dev/null || true
+	[ -r "$repo_sh" ] || die "missing $repo_sh (broken luna-base package)"
+	# shellcheck disable=SC1091
+	. "$repo_sh"
+	prepare_live_for_setup_alpine
 }
 
 write_answer_file() {

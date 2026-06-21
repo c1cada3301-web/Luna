@@ -1,5 +1,5 @@
 #!/bin/sh
-# После boot — CDN Alpine + локальный Luna repo (если распакован).
+# После boot — CDN Alpine + локальный Luna repo (bundled → /var/lib/luna/apk-repo).
 
 . /etc/os-release 2>/dev/null || VERSION_ID=3.20
 ver="${VERSION_ID%.*}"
@@ -26,11 +26,6 @@ https://dl-cdn.alpinelinux.org/alpine/v${ver}/community
 EOF
 fi
 
-if command -v luna_apk_repo_present >/dev/null 2>&1; then
-	if ! luna_apk_repo_present && luna_apk_repo_bundled_present; then
-		install_bundled_luna_apk_repo 2>/dev/null || true
-	fi
-	ensure_luna_apk_repo_in_repositories
+if [ -r "$LUNA_SHARE/luna-apk-repo.sh" ]; then
+	ensure_luna_apk_repos_live 2>/dev/null || apk update --quiet 2>/dev/null || true
 fi
-
-apk update --quiet 2>/dev/null || true
