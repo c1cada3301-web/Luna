@@ -7,6 +7,7 @@
 ### Fixed
 
 - **`luna self-update`:** `tmpdir: unbound variable` — RETURN trap с `set -u` (literal path + явный cleanup)
+- **CI release:** `luna-*-apk-repo.tar.gz` не попадал в GitHub Release (сборка в контейнере писала в немounted `release-assets/`)
 
 ## [0.8.4] — 2026-06-21
 
