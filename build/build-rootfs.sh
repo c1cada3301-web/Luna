@@ -39,6 +39,24 @@ fi
 
 cp -a "$ROOT/overlay/." "$ROOTFS/"
 chmod +x "$ROOTFS"/etc/local.d/*.start 2>/dev/null || true
+chmod +x "$ROOTFS"/usr/local/bin/* 2>/dev/null || true
+
+# busybox mdev: @ надёжнее */path (иначе «persistent-storage: not found» при coldplug)
+sed -i 's|\*/lib/mdev/persistent-storage|@/lib/mdev/persistent-storage|g' \
+	"$ROOTFS/etc/mdev.conf"
+
+# Luna: initramfs только с ISO — без CDN даже если в VM есть сеть
+INIT="$ROOTFS/usr/share/mkinitfs/initramfs-init"
+awk '
+/^apkflags="--initramfs-diskless-boot --progress"$/ {
+	print "apkflags=\"--initramfs-diskless-boot --progress --no-network\""
+	skip = 1
+	next
+}
+skip && /^if \[ -z "\$MAC_ADDRESS" \]; then$/ { skip = 2; next }
+skip == 2 { if (/^fi$/) skip = 0; next }
+{ print }
+' "$INIT" > "$INIT.luna" && mv "$INIT.luna" "$INIT"
 
 configure_inittab() {
     # Только tty1 — serial-консоли добавит initramfs (setup_inittab_console),
@@ -70,6 +88,15 @@ if ! id luna >/dev/null 2>&1; then
 fi
 passwd -d luna >/dev/null 2>&1 || true
 chown luna:wheel /home/luna 2>/dev/null || true
+
+# bash + Luna prompt для root и luna
+sed -i 's|^root:.*|root:x:0:0:root:/root:/bin/bash|' /etc/passwd
+if [ -f /etc/skel/.bashrc ]; then
+	cp /etc/skel/.bashrc /root/.bashrc
+	cp /etc/skel/.bashrc /home/luna/.bashrc
+	chown luna:wheel /home/luna/.bashrc
+fi
+
 install -d -m 750 /etc/sudoers.d
 echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel
 chmod 440 /etc/sudoers.d/wheel
@@ -92,6 +119,7 @@ CHROOT
 
 KV="$(ls "$ROOTFS/lib/modules")"
 echo "==> Генерируем initramfs для ядра $KV"
-mkinitfs -b "$ROOTFS" -k "$KV"
+# -k в mkinitfs = «keep tempdir», не версия ядра; -i = наш пропатченный init
+mkinitfs -b "$ROOTFS" -i "$ROOTFS/usr/share/mkinitfs/initramfs-init" "$KV"
 
 echo "==> Rootfs готов: $ROOTFS"

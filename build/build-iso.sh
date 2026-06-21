@@ -6,10 +6,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LUNA_ARCH="${LUNA_ARCH:-x86_64}"
+LUNA_VERSION="$(grep '^LUNA_VERSION=' "$ROOT/overlay/etc/luna-release" | cut -d= -f2)"
 WORKDIR="$ROOT/work/${LUNA_ARCH}"
 ROOTFS="$WORKDIR/rootfs"
 ISODIR="$WORKDIR/isodir"
-ISO="$ROOT/out/luna-0.2.0-${LUNA_ARCH}.iso"
+ISO="$ROOT/out/luna-${LUNA_VERSION}-${LUNA_ARCH}.iso"
 REPO_KEY="$ROOT/build/keys/luna-repo.rsa"
 
 prepare_alpine_iso_tree() {
@@ -64,10 +65,10 @@ prepare_alpine_iso_tree() {
 
     case "$LUNA_ARCH" in
         aarch64)
-            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod,virtio_net,virtio_pci,virtio_mmio quiet console=tty0 modloop=none"
+            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod,virtio_net,virtio_pci,virtio_mmio quiet console=tty0 modloop=none ip=off"
             ;;
         x86_64)
-            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod,virtio_net,virtio_pci quiet console=tty0 console=ttyS0,115200 modloop=none"
+            kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,iso9660,sr-mod,virtio_net,virtio_pci quiet console=tty0 console=ttyS0,115200 modloop=none ip=off"
             ;;
     esac
 
@@ -152,7 +153,7 @@ EOF
 esac
 
 if [ "$LUNA_ARCH" = "x86_64" ]; then
-    cp "$ISO" "$ROOT/out/luna-0.2.0.iso"
+    cp "$ISO" "$ROOT/out/luna-${LUNA_VERSION}.iso"
 fi
 
 echo "==> ISO готов: $ISO ($(du -h "$ISO" | cut -f1))"

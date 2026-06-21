@@ -1,0 +1,29 @@
+Luna 0.3.0 — quick reference
+============================
+
+Version:    cat /etc/luna-release
+Packages:   apk info -I | wc -l installed from ISO
+
+Users
+  luna / root — empty password (live demo)
+  luna has passwordless sudo (wheel)
+
+Network
+  ip addr              show interfaces
+  curl -I URL          test HTTP (ping may fail on NAT)
+
+Packages
+  apk update           refresh CDN index (after boot)
+  apk add PKG          install from Alpine CDN
+
+Tools included
+  bash nano vim mc htop curl wget git openssh sudo e2fsprogs
+
+Persist disk (optional)
+  mkfs.ext4 -L LUNA_DATA /dev/sdX
+  reboot → auto-mount at /mnt/persist
+
+SSH
+  ssh luna@<vm-ip>     from host (NAT port forward if needed)
+
+Docs on build host: docs/default-packages.md, CHANGELOG.md

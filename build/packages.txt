@@ -11,3 +11,4 @@ sudo
 openssh
 e2fsprogs
 htop
+mc

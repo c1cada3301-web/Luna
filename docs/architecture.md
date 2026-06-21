@@ -23,17 +23,19 @@ apk add (локальный репозиторий + подписанный APKI
        ↓
 unpack localhost.apkovl.tar.gz (etc/ + root/)
        ↓
-switch_root → OpenRC → local.d → login
+switch_root → OpenRC → local.d → login (banner + MOTD + prompt)
        ↓
 setup-apkrepos.start: /etc/apk/repositories ← только CDN (ISO-репо убирается)
 ```
+
+После login пользователь видит брендинг Luna 0.3.0 — см. [user-experience.md](user-experience.md).
 
 ISO содержит:
 
 - `boot/vmlinuz-virt`, `boot/initramfs-virt`
 - `boot/modloop-virt` (squashfs модулей; на M0 не монтируется — `modloop=none`)
 - `apks/<arch>/*.apk` + подписанный `APKINDEX.tar.gz`
-- `localhost.apkovl.tar.gz` — конфиг Luna (hostname, issue, motd, keys)
+- `localhost.apkovl.tar.gz` — конфиг Luna (hostname, issue, motd, keys, local.d)
 - `.alpine-release`
 
 Модули ядра ставятся через пакет `linux-virt` при diskless apk, без modloop.
@@ -44,8 +46,8 @@ ISO содержит:
 |---|--------|---------|
 | Целевая VM | QEMU, VirtualBox Intel | VirtualBox / UTM на Apple Silicon |
 | Bootloader | syslinux (BIOS) | GRUB UEFI (`BOOTAA64.EFI`) |
-| Kernel cmdline | `console=tty0 console=ttyS0` | `console=tty0` |
-| ISO | `out/luna-0.2.0-x86_64.iso` | `out/luna-0.2.0-aarch64.iso` |
+| Kernel cmdline | `console=tty0 console=ttyS0 ip=off` | `console=tty0 ip=off` |
+| ISO | `out/luna-0.3.0-x86_64.iso` | `out/luna-0.3.0-aarch64.iso` |
 
 Сборка: `LUNA_ARCH` в Docker (`docker-compose.yml`).
 
@@ -53,19 +55,34 @@ ISO содержит:
 
 ```
 ┌──────────────────────────────────────────┐
-│  luna-shell / luna-cli        (будущее)  │
+│  luna CLI / agent             (фаза 3+)  │
 ├──────────────────────────────────────────┤
-│  overlay: hostname, issue, motd, release │
+│  overlay: issue, motd, prompt, luna-help │
+│  local.d: network, apk repos, persist    │
 ├──────────────────────────────────────────┤
 │  Alpine rootfs (diskless tmpfs)  OpenRC  │
 ├──────────────────────────────────────────┤
-│  linux-virt kernel (Alpine)              │
+│  linux-virt kernel (Alpine 3.20)         │
 ├──────────────────────────────────────────┤
 │  GRUB UEFI / syslinux + ISO9660          │
 └──────────────────────────────────────────┘
 ```
 
 Kernel не форкаем. Кастомизация — overlay, `packages.txt`, apkovl.
+
+## Overlay Luna (0.3.0)
+
+| Путь | Назначение |
+|------|------------|
+| `etc/issue`, `etc/motd` | Login banner и MOTD |
+| `etc/luna-release` | Версия образа (`LUNA_VERSION`) |
+| `etc/profile.d/luna-prompt.sh` | Bash prompt `◐ luna:…` |
+| `etc/skel/.bashrc` | Интерактивный shell для root/luna |
+| `etc/local.d/*.start` | DHCP, CDN repos, persist-диск |
+| `usr/local/bin/luna-help` | Quick reference на системе |
+| `usr/share/luna/welcome.txt` | Текст справки |
+
+Подробнее: [user-experience.md](user-experience.md), [default-packages.md](default-packages.md).
 
 ## Структура репозитория
 
@@ -79,6 +96,7 @@ Luna/
 │   ├── packages.txt
 │   └── keys/                 # luna-repo.rsa (gitignore)
 ├── overlay/etc/
+├── overlay/usr/                # luna-help, welcome.txt
 ├── scripts/test-qemu.sh
 ├── docker-compose.yml
 └── out/                      # gitignore
@@ -87,9 +105,9 @@ Luna/
 ## Init и консоль
 
 - **OpenRC** — sysinit/boot/default runlevels
-- **Login:** `/etc/inittab` → `agetty` на `tty1` (без дублирования через OpenRC agetty)
+- **Login:** `/etc/inittab` → `agetty` на `tty1`; banner из `/etc/issue`
 - Serial-консоли добавляет initramfs (`setup_inittab_console`), только если устройство доступно
-- Root без пароля на M0 (`passwd -d root` при сборке)
+- Пользователи `root` и `luna` — пустой пароль (live demo); `luna` в группе `wheel` (sudo)
 
 ## Подпись локального репозитория
 
@@ -102,7 +120,7 @@ Boot-time `apk` требует доверенный `APKINDEX`. Схема:
 
 | Этап | Репозитории | Зачем |
 |------|-------------|--------|
-| Initramfs | Локальный ISO (`apks/.boot_repository`) | Установка rootfs без сети |
+| Initramfs | Локальный ISO (`apks/.boot_repository`) | Установка rootfs **без CDN** (`--no-network`, `ip=off`) |
 | apkovl | **Без** `etc/apk/repositories` | Иначе при NAT apk тянет CDN во время boot |
 | После boot | `setup-apkrepos.start` → **только CDN** | `apk add` без конфликта с ISO-индексом |
 
@@ -117,7 +135,7 @@ Boot-time `apk` требует доверенный `APKINDEX`. Схема:
 
 ## Безопасность (минимум)
 
-- Root без пароля — только M0; на M1 — user + sudo
+- Пустые пароли root/luna — только для live demo в VM
 - Приватный ключ репозитория не в git
 - AI-shell (фаза 4) — подтверждение destructive commands
 

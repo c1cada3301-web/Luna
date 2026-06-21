@@ -28,24 +28,24 @@
 - [x] Пользователь `luna` + sudo, openssh
 - [x] Пакеты: curl, git, vim, htop, e2fsprogs
 - [x] Persist: диск `LUNA_DATA` → `/mnt/persist`
-- [ ] Чистая загрузка без косметических предупреждений
+- [x] Чистая загрузка без косметических предупреждений (initramfs offline, mdev)
 
 **Критерий:** `curl`, `apk add`, `htop` — **выполнен** (июнь 2026)
 
 ---
 
-## Фаза 2 — Идентичность Luna
+## Фаза 2 — Идентичность Luna ✅
 
 **Цель:** это уже «Luna», а не «голый Alpine в другой обёртке».
 
-- Кастомный prompt, login banner
-- Расширенный набор пакетов по умолчанию (curl, git, editor)
-- Документ «что входит в Luna by default»
-- Версионирование и changelog образа
+- [x] Кастомный prompt, login banner
+- [x] Расширенный набор пакетов по умолчанию (curl, git, editor)
+- [x] Документ «что входит в Luna by default» → [default-packages.md](default-packages.md)
+- [x] Версионирование и changelog образа → [CHANGELOG.md](../CHANGELOG.md)
 
-**Критерий готовности:** при загрузке однозначно видно Luna; есть файл версии и описание состава.
+**Критерий:** при загрузке однозначно видно Luna; есть файл версии и описание состава — **выполнен** (июнь 2026)
 
-**Оценка:** ~1 неделя
+**Завершено:** июнь 2026
 
 ---
 
@@ -89,7 +89,7 @@
 ```mermaid
 flowchart LR
     M0[M0: ISO boots ✅] --> M1[M1: Network + packages]
-    M1 --> M2[M2: Luna branding]
+    M1 --> M2[M2: Luna branding ✅]
     M2 --> M3[M3: Luna CLI/TUI]
     M3 --> M4[M4: AI shell prototype]
     M0 -.-> OSDev[OSDev experiments]

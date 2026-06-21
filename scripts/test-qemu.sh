@@ -6,6 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ARCH="${1:-}"
+LUNA_VERSION="$(grep '^LUNA_VERSION=' "$ROOT/overlay/etc/luna-release" | cut -d= -f2)"
 
 if [ -z "$ARCH" ]; then
     case "$(uname -m)" in
@@ -14,7 +15,7 @@ if [ -z "$ARCH" ]; then
     esac
 fi
 
-ISO="$ROOT/out/luna-0.2.0-${ARCH}.iso"
+ISO="$ROOT/out/luna-${LUNA_VERSION}-${ARCH}.iso"
 
 if [ ! -f "$ISO" ]; then
     echo "ISO не найден: $ISO"
