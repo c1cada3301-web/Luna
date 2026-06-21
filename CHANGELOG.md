@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.6] — 2026-06-21
+
+### Fixed
+
+- **CI release:** `mv` apk-repo tarball — файлы в `out/` от root в Docker, runner без `sudo chown` не мог их переместить
+
 ## [0.8.5] — 2026-06-21
 
 ### Fixed

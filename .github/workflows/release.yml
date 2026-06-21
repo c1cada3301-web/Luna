@@ -109,8 +109,9 @@ jobs:
             echo "Skipping apk repo (no signing key)"
             exit 0
           fi
-          # release-assets/ is not mounted into the build container — write to out/ then copy
+          # Container runs as root — chown before mv (runner cannot move root-owned files)
           docker compose run --rm luna-build-aarch64 ./scripts/build-apk-repo.sh out
+          sudo chown -R "$(id -u):$(id -g)" out/
           mv out/luna-*-apk-repo.tar.gz release-assets/
           test -f release-assets/luna-*-apk-repo.tar.gz
 
