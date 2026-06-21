@@ -24,13 +24,13 @@ Luna — операционная система, которую хочется 
 
 ## Ближайшая цель (сейчас)
 
-**Luna 0.4.0** — минимальный live-дистрибутив с узнаваемым брендингом и CLI `luna`:
+**Luna 0.5.0** — Luna Shell welcome, CLI `luna`, agent stub:
 
 1. ✅ Загружается с ISO в VirtualBox / QEMU
 2. ✅ Рабочий терминал, сеть, `apk add`, `git clone`
-3. ✅ Брендинг Luna (banner, MOTD, prompt)
-4. ✅ CLI `luna` (version, status, help, tui)
-5. ✅ Воспроизводимая сборка одной Docker-командой
+3. ✅ Брендинг Luna (🌙 banner, MOTD, prompt)
+4. ✅ Luna Shell: `luna` welcome, `luna think`, status
+5. ✅ SSH dev (empty password), воспроизводимая сборка Docker
 
 **Следующий шаг:** [Фаза 4](roadmap.md#фаза-4--зачатки-ai-shell-далёкое-будущее) — AI-shell prototype. Стратегия UI без GNOME: [ui-strategy.md](ui-strategy.md).
 

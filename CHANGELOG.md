@@ -2,6 +2,31 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.5.0] — 2026-06-21
+
+### Added
+
+- **Luna Shell welcome** — `luna` без аргументов → карточка с 🌙 (Claude-style)
+- `luna think [sec]` — анимация фаз 🌙 ◐ ◑ ◒
+- `welcome-screen.sh`, `thinking.sh` в `/usr/share/luna/`
+- SSH: `PermitEmptyPasswords` для dev-VM (`sshd_config.d/luna.conf`)
+- Login banner: 🌙 Luna 0.5.0 (`/etc/issue`)
+
+### Changed
+
+- `luna status` — заголовок с 🌙 и uptime
+- `luna tui` — пункт «Think (demo)»
+- Фаза **4** (начало Luna Shell UX); agent по-прежнему stub
+- Документация: SSH port forward, JetBrains Mono
+
+### Fixed
+
+- Welcome-screen: убран `tput dim/bold` — дубли строк в SSH/iTerm
+
+### Verified
+
+- VirtualBox ARM64 + SSH `2222→22`: welcome, think, status (JetBrains Mono)
+
 ## [0.4.0] — 2026-06-21
 
 ### Added

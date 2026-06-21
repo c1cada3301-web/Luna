@@ -28,7 +28,7 @@ switch_root → OpenRC → local.d → login (banner + MOTD + prompt)
 setup-apkrepos.start: /etc/apk/repositories ← только CDN (ISO-репо убирается)
 ```
 
-После login пользователь видит брендинг Luna 0.4.0 — см. [user-experience.md](user-experience.md).
+После login пользователь видит Luna Shell 0.5.0 — см. [user-experience.md](user-experience.md).
 
 ISO содержит:
 
@@ -47,7 +47,7 @@ ISO содержит:
 | Целевая VM | QEMU, VirtualBox Intel | VirtualBox / UTM на Apple Silicon |
 | Bootloader | syslinux (BIOS) | GRUB UEFI (`BOOTAA64.EFI`) |
 | Kernel cmdline | `console=tty0 console=ttyS0 ip=off` | `console=tty0 ip=off` |
-| ISO | `out/luna-0.4.0-x86_64.iso` | `out/luna-0.4.0-aarch64.iso` |
+| ISO | `out/luna-0.5.0-x86_64.iso` | `out/luna-0.5.0-aarch64.iso` |
 
 Сборка: `LUNA_ARCH` в Docker (`docker-compose.yml`).
 
@@ -70,7 +70,7 @@ ISO содержит:
 
 Kernel не форкаем. Кастомизация — overlay, `packages.txt`, apkovl.
 
-## Overlay Luna (0.4.0)
+## Overlay Luna (0.5.0)
 
 | Путь | Назначение |
 |------|------------|
@@ -81,9 +81,11 @@ Kernel не форкаем. Кастомизация — overlay, `packages.txt`
 | `etc/profile.d/luna-locale.sh` | export LANG из locale.conf |
 | `etc/skel/.bashrc` | Интерактивный shell для root/luna |
 | `etc/local.d/*.start` | DHCP, CDN repos, persist-диск |
-| `usr/local/bin/luna` | CLI: version, status, help, tui |
-| `usr/share/luna/` | welcome.txt, luna-tui.sh |
+| `usr/local/bin/luna` | CLI: welcome, status, think, help, tui |
+| `usr/share/luna/welcome-screen.sh` | Welcome card (Luna Shell) |
+| `usr/share/luna/thinking.sh` | Phase animation |
 | `etc/init.d/luna-agent` | OpenRC stub (не в default runlevel) |
+| `etc/ssh/sshd_config.d/luna.conf` | SSH empty password (dev VM) |
 
 **Boot `local.d`:** только `network-dhcp`, `setup-apkrepos`, `mount-persist` — как в 0.3.0. Не добавлять `setup-keymap` / `apk add` в `.start` (блокирует runlevel `local`).
 

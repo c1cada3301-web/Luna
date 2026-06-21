@@ -1,0 +1,38 @@
+# Luna glyphs — быстрый preview
+# while IFS= read -r line; do printf '%s\n' "$line"; done < docs/luna-glyphs-preview.txt
+
+── one-char (recommended non-emoji) ──
+🌙
+☾
+☽
+◐
+◑
+◒
+
+── sans-serif title (UTF-8 math) ──
+𝗪𝗲𝗹𝗰𝗼𝗺𝗲 𝘁𝗼 𝗟𝘂𝗻𝗮
+𝘓𝘶𝘯𝘢 0.4.0 · minimal Linux
+
+── braille arc (variant C) ──
+⠀⠀⠀⠀⠀⣀⣤⣶⣶⣶⣤⣀⠀⠀⠀⠀
+⠀⠀⠀⣀⣾⣿⣿⣿⣿⣿⣷⣀⠀⠀
+⠀⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀
+⠀⠀⠀⠈⢻⣿⣿⣿⡟⠁⠀⠀
+⠀⠀⠀⠀⠀⠉⠉⠉⠀⠀⠀
+
+── braille disk compact (variant D) ──
+⠀⣀⣤⣶⣶⣤⣀⠀
+⣀⣾⣿⣿⣿⣿⣾⣀
+⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿
+⣾⣿⣿⣿⣿⣿⣿⣾
+⠀⣶⣿⣿⣿⣿⣶⠀
+
+── thin ring (variant E) ──
+  ╭───────╮
+ ╱         ╲
+│           │
+ ╲         ╱
+  ╰───────╯
+
+── DEPRECATED: do not use █ pixel moon ──

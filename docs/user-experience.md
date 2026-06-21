@@ -1,4 +1,4 @@
-# Опыт пользователя (Luna 0.4.0)
+# Опыт пользователя (Luna 0.5.0)
 
 Как выглядит Luna при загрузке в VirtualBox / QEMU — минимально, но узнаваемо.
 
@@ -10,38 +10,37 @@ GRUB «Luna» → OpenRC [*] → (clear) → login banner → luna / Enter → M
 
 1. **GRUB** — пункт меню Luna, ядро `virt`, initramfs с локального ISO.
 2. **OpenRC** — монтирование FS, `mdev`, `hwdrivers`, `networking`, `local`, `sshd`.
-3. **Login banner** — agetty очищает tty1 и показывает `/etc/issue`.
+3. **Login banner** — `/etc/issue`: 🌙 Luna 0.5.0.
 4. **Login** — `luna` или `root`, пароль пустой (Enter).
-5. **MOTD** — `/etc/motd` при первом входе в shell.
-6. **Prompt** — `◐ luna:~/path$` (bash).
+5. **`luna`** — welcome-screen (Claude-style card).
+6. **MOTD** — краткая подсказка.
+7. **Prompt** — `◐ luna:~/path$` (bash).
 
 Красные `ERROR: … package mentioned in index not found` в initramfs — **косметика** (локальный индекс ISO vs world); на login не влияют.
 
 ## Login banner (`/etc/issue`)
 
 ```
-+------------------------------+
-|        L U N A  0.4.0        |
-|   minimal Linux · live ISO   |
-+------------------------------+
- login: luna or root
- password: (empty — press Enter)
+  🌙  Luna 0.5.0
+  login: luna or root (empty password)
 
-  after login: luna status · luna help · luna tui
+  after login: luna
 
 login:
 ```
 
-- Показывается на **tty1** до ввода логина.
-- Рамка выровнена под ~80 колонок; на широком окне VirtualBox может быть слева — это нормально для текстовой консоли.
-- Отдельного «окна» или второго TTY нет — тот же fullscreen терминал VB после clear.
+## Luna Shell welcome (`luna`)
+
+Карточка с рамкой, 🌙 слева, Tips / What's new справа — см. [luna-shell-tui-sketch.txt](luna-shell-tui-sketch.txt).
+
+**SSH с Mac:** port forward 2222→22; после пересборки ISO — `ssh-keygen -R '[127.0.0.1]:2222'`. JetBrains Mono — welcome без дублей строк.
 
 ## После входа
 
 **MOTD:**
 
 ```
-── Luna 0.4.0 ──  luna status · luna help · setup-timezone · setup-keymap
+── Luna 0.5.0 ──  luna · luna status · luna help · SSH: see docs
 ```
 
 **Prompt** (`/etc/profile.d/luna-prompt.sh`):
@@ -54,13 +53,11 @@ login:
 **CLI:**
 
 ```sh
+luna              # welcome-screen 🌙
 luna status
-luna version
+luna think 5
 luna help
-luna tui          # меню вручную, не при boot
-luna-help         # → luna help
-mc                # файловый менеджер (TUI)
-cat /etc/luna-release
+luna tui
 ```
 
 **Locale / keyboard** (после login, когда CDN repos уже настроены):

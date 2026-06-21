@@ -1,5 +1,5 @@
 #!/bin/sh
-# Luna CLI — version, status, help, tui
+# Luna CLI — version, status, help, welcome, tui
 
 set -eu
 
@@ -54,8 +54,7 @@ cmd_status() {
 	uptime_h=$(( uptime_s / 3600 ))
 	uptime_m=$(( (uptime_s % 3600) / 60 ))
 
-	printf '◐ Luna %s · %s\n' "${LUNA_VERSION:-?}" "$hostname"
-	printf '  uptime:   %dh %dm\n' "$uptime_h" "$uptime_m"
+	printf '🌙 Luna %s · %s · %dh %dm\n' "${LUNA_VERSION:-?}" "$hostname" "$uptime_h" "$uptime_m"
 	printf '  memory:   '
 	free -h 2>/dev/null | awk '/^Mem:/ { print $3 " used / " $2 " total" }' || echo "n/a"
 	printf '  network:\n'
@@ -77,22 +76,41 @@ cmd_status() {
 	fi
 }
 
+cmd_welcome() {
+	if [ -x "$LUNA_SHARE/welcome-screen.sh" ]; then
+		exec "$LUNA_SHARE/welcome-screen.sh"
+	fi
+	cmd_help
+}
+
+cmd_think() {
+	secs="${1:-5}"
+	if [ -x "$LUNA_SHARE/thinking.sh" ]; then
+		exec "$LUNA_SHARE/thinking.sh" "$secs"
+	fi
+	echo "thinking.sh not found" >&2
+	exit 1
+}
+
 cmd_help() {
 	load_release
 	cat <<EOF
-Luna ${LUNA_VERSION:-?} — minimal live Linux
+Luna ${LUNA_VERSION:-?} — Luna Shell
 
-Usage: luna <command>
+Usage: luna [command]
 
 Commands:
+  (none)          welcome screen (Luna Shell)
   version, -v     show Luna version
   status          system overview (network, persist, services)
+  think [sec]     moon phase animation (agent preview, default 5s)
   help, -h        this message
   tui             simple interactive menu
 
 Legacy: luna-help (same as luna help)
 
 Agent stub: rc-service luna-agent start|stop|status
+SSH (NAT):  ssh -p 2222 luna@127.0.0.1
 EOF
 }
 
@@ -105,11 +123,13 @@ cmd_tui() {
 }
 
 main() {
-	case "${1:-help}" in
+	case "${1:-}" in
 		version|-v|--version) cmd_version ;;
 		status)               cmd_status ;;
-		help|-h|--help|"")    cmd_help ;;
+		help|-h|--help)       cmd_help ;;
+		think)                cmd_think "${2:-5}" ;;
 		tui|menu)             cmd_tui ;;
+		"")                   cmd_welcome ;;
 		*)
 			printf 'luna: unknown command %s\n\n' "$1" >&2
 			cmd_help >&2

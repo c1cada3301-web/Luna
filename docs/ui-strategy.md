@@ -2,18 +2,18 @@
 
 Luna — **не десктопный дистрибутив**. Полноценный DE (GNOME, KDE) в roadmap на старте **нет** — см. [vision.md](vision.md). Ниже — варианты интерфейса от «только терминал» до будущего AI-shell и зачем (не) нужен файловый менеджер.
 
-## Что есть сейчас (0.4.0)
+## Что есть сейчас (0.5.0)
 
 | Слой | Реализация |
 |------|------------|
-| Boot / login | OpenRC + agetty, ASCII banner `/etc/issue` |
-| Shell | bash, prompt Luna |
-| Обзор системы | `luna status`, `luna version` |
+| Boot / login | OpenRC + agetty; banner `/etc/issue` → **🌙** в Luna Shell |
+| Shell | bash, prompt **◐** luna: |
+| Обзор системы | `luna status` (🌙 в заголовке) |
 | Простое меню | `luna tui` (bash `select`, **вручную** после login) |
 | Файлы в терминале | **`mc`** (Midnight Commander) — уже в образе |
 | Удалённый доступ | SSH, `scp`/`rsync` с хоста |
 
-Отдельного «окна входа» или графического TUI при boot **нет** — это одна консоль tty1; agetty очищает экран и показывает banner.
+Отдельного «окна входа» или графического TUI при boot **нет** — одна консоль tty1. Glyph: **🌙**; agent «thinking»: **🌙 ◐ ◑ ◒** — см. [luna-shell-tui-sketch.txt](luna-shell-tui-sketch.txt).
 
 ## Зачем (не) нужен GNOME
 
@@ -113,3 +113,4 @@ Wayland compositor (sway / labwc / cage)
 - [roadmap.md](roadmap.md) — фаза 4 AI-shell
 - [user-experience.md](user-experience.md) — login, MOTD, prompt
 - [default-packages.md](default-packages.md) — `mc`, locale
+- [luna-shell-tui-sketch.txt](luna-shell-tui-sketch.txt) — макет welcome (Claude-style)

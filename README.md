@@ -4,11 +4,11 @@
 
 ## Статус
 
-**Luna 0.4.0 — фаза 3** (июнь 2026)
+**Luna 0.5.0 — фаза 4 (Luna Shell UX)** (июнь 2026)
 
-- Загрузочный ISO (ARM64 + x86_64), diskless live
-- CLI **`luna`** (version, status, help, tui)
-- OpenRC stub **`luna-agent`** для будущего AI-shell
+- **`luna`** — welcome-screen с 🌙 (Claude-style card)
+- **`luna think`** — анимация фаз луны (preview agent)
+- CLI: version, status, help, tui · OpenRC **`luna-agent`** stub
 - Брендинг: login banner, MOTD, bash-prompt
 - Сеть (DHCP), online `apk add`, curl/git/vim/htop/mc
 - Пользователи `root` и `luna` (sudo), SSH
@@ -37,30 +37,35 @@ docker compose run --rm luna-build-x86_64    # QEMU / Intel
 
 | ISO | Архитектура | Тест |
 |-----|-------------|------|
-| `out/luna-0.4.0-aarch64.iso` (~112 MB) | ARM64 | VirtualBox: **ARM 64-bit, EFI ON** |
-| `out/luna-0.4.0-x86_64.iso` | x86_64 | QEMU, VirtualBox Intel |
+| `out/luna-0.5.0-aarch64.iso` (~112 MB) | ARM64 | VirtualBox: **ARM 64-bit, EFI ON** |
+| `out/luna-0.5.0-x86_64.iso` | x86_64 | QEMU, VirtualBox Intel |
 
 ### 3. VirtualBox (Apple Silicon)
 
 1. Other Linux **(ARM 64-bit)**, EFI **ON**, RAM **1024–2048 MB**
 2. Network → Adapter 1 → **NAT**
-3. ISO → `out/luna-0.4.0-aarch64.iso`
+3. ISO → `out/luna-0.5.0-aarch64.iso`
 
-**Вход:** `luna` или `root`, пароль **пустой** (Enter).
+**Вход:** `luna` или `root`, пароль **пустой** (Enter). Затем **`luna`** — welcome-screen.
 
-### 4. После входа
+### 4. SSH с Mac (VM уже запущена)
+
+1. VirtualBox → Network → NAT → Port Forwarding: **2222 → 22**
+2. `ssh -p 2222 luna@127.0.0.1` (пароль пустой)
+3. Шрифт в iTerm: **JetBrains Mono 15** — как в Cursor
+
+### 5. После входа
 
 ```sh
-luna status             # обзор системы
-luna help               # команды CLI
-cat /etc/luna-release   # версия
-curl -I https://example.com
-apk add mc              # online repos (CDN)
+luna                    # welcome-screen 🌙
+luna status
+luna think 5            # animation demo
+luna help
 ```
 
 Prompt: `◐ luna:~$` (фиолетово-синий).
 
-### 5. QEMU
+### 6. QEMU
 
 ```bash
 ./scripts/test-qemu.sh aarch64
@@ -90,7 +95,7 @@ Luna/
 |----------|--------|
 | [Roadmap](docs/roadmap.md) | Фазы 0–4 |
 | [Luna CLI](docs/luna-cli.md) | `luna version`, `status`, `tui` |
-| [Пакеты по умолчанию](docs/default-packages.md) | Состав образа 0.4.0 |
+| [Пакеты по умолчанию](docs/default-packages.md) | Состав образа 0.5.0 |
 | [UI без GNOME](docs/ui-strategy.md) | Terminal, Wayland, Luna Shell |
 | [Changelog](CHANGELOG.md) | История версий |
 | [Документация](docs/README.md) | Индекс всех docs |

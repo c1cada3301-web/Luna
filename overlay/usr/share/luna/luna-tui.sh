@@ -9,12 +9,13 @@ luna_cmd() {
 
 while true; do
 	echo
-	echo "── Luna menu ──"
+	printf '🌙 %s\n' "── Luna menu ──"
 	PS3="Choose: "
 	choices=(
 		"Status"
 		"Version"
 		"Help"
+		"Think (demo)"
 		"Agent (stub) status"
 		"Quit"
 	)
@@ -23,11 +24,12 @@ while true; do
 			1) echo; luna_cmd status ;;
 			2) echo; luna_cmd version ;;
 			3) echo; luna_cmd help ;;
-			4)
+			4) echo; luna_cmd think 5 ;;
+			5)
 				echo
 				rc-service luna-agent status 2>&1 || true
 				;;
-			5) exit 0 ;;
+			6) exit 0 ;;
 			*) echo "Invalid option" ;;
 		esac
 		break

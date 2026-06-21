@@ -65,17 +65,20 @@
 
 ---
 
-## Фаза 4 — Зачатки AI-shell (далёкое будущее)
+## Фаза 4 — Luna Shell (в работе)
 
 **Цель:** прототип «скажи системе, что сделать» — **в userspace**, не в kernel.
 
-- Локальный или API-based LLM
-- Intent → shell command / service action
-- Sandbox, подтверждение опасных команд
+- [x] Welcome-screen (`luna` без args) — 🌙, Claude-style card **0.5.0**
+- [x] `luna think` — анимация фаз (preview agent)
+- [x] SSH empty password для dev-тестов с Mac
+- [ ] Локальный или API-based LLM
+- [ ] Intent → shell command / service action
+- [ ] Sandbox, подтверждение опасных команд
 
-UI: terminal-first или минимальный compositor — не GNOME. См. [ui-strategy.md](ui-strategy.md).
+UI: terminal-first — см. [ui-strategy.md](ui-strategy.md), [luna-shell-tui-sketch.txt](luna-shell-tui-sketch.txt).
 
-**Не начинаем**, пока не закрыты фазы 1–2.
+**Начато:** июнь 2026 (0.5.0)
 
 ---
 

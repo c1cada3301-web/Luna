@@ -1,8 +1,6 @@
 # Пакеты Luna by default
 
-Luna 0.4.0 — live ISO на **Alpine Linux 3.20**. Все пакеты ниже попадают в локальный APK-репозиторий на ISO и устанавливаются при boot через initramfs.
-
-## Базовые (build-rootfs.sh)
+Luna 0.5.0 — live ISO на **Alpine Linux 3.20**. Все пакеты ниже попадают в локальный APK-репозиторий на ISO и устанавливаются при boot через initramfs.
 
 Скелет системы, init, ядро:
 

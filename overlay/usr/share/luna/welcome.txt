@@ -1,9 +1,10 @@
-Luna 0.4.0 — quick reference
+Luna 0.5.0 — quick reference
 ============================
 
-CLI
-  luna version       version and kernel
+Luna Shell
+  luna               welcome screen (default)
   luna status        network, persist, services
+  luna think [sec]   moon phase animation (demo)
   luna help          all commands
   luna tui           interactive menu
 
@@ -18,6 +19,11 @@ Network
   ip addr              show interfaces
   curl -I URL          test HTTP (ping may fail on NAT)
 
+SSH from Mac (VM running, NAT)
+  VirtualBox: port forward Host 2222 → Guest 22
+  ssh -p 2222 luna@127.0.0.1
+  Font: JetBrains Mono 15 (same as Cursor)
+
 Packages
   apk update           refresh CDN index (after boot)
   apk add PKG          install from Alpine CDN
@@ -29,10 +35,7 @@ Persist disk (optional)
   mkfs.ext4 -L LUNA_DATA /dev/sdX
   reboot → auto-mount at /mnt/persist
 
-Agent (stub, phase 3)
+Agent (stub)
   rc-service luna-agent start|stop|status
 
-SSH
-  ssh luna@<vm-ip>     from host (NAT port forward if needed)
-
-Docs on build host: docs/luna-cli.md, CHANGELOG.md
+Docs on build host: docs/luna-cli.md, docs/luna-shell-tui-sketch.txt

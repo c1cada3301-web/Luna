@@ -13,7 +13,7 @@ Docker Desktop, QEMU (`brew install qemu`), VirtualBox, Git.
 docker compose run --rm luna-build-aarch64
 ```
 
-Результат: `out/luna-0.4.0-aarch64.iso` (~112 MB)
+Результат: `out/luna-0.5.0-aarch64.iso` (~112 MB)
 
 ## VirtualBox (Apple Silicon)
 
@@ -23,9 +23,24 @@ docker compose run --rm luna-build-aarch64
 | EFI | **ON** |
 | RAM | **1024–2048 MB** |
 | Network | Adapter 1 **NAT** |
-| ISO | `out/luna-0.4.0-aarch64.iso` |
+| ISO | `out/luna-0.5.0-aarch64.iso` |
 
-**Login:** `luna` или `root`, пароль пустой (Enter). Экран входа — ASCII banner; OpenRC scrollback в истории tty.
+**Login:** `luna` / Enter → **`luna`** (welcome 🌙).
+
+## SSH с Mac (VM уже запущена)
+
+1. VirtualBox → Network → NAT → **Port Forwarding**: Host **2222** → Guest **22**
+2. Если раньше подключались к другому ISO — сбрось ключ:
+   ```bash
+   ssh-keygen -R '[127.0.0.1]:2222'
+   ```
+3. Подключение:
+   ```bash
+   ssh -p 2222 luna@127.0.0.1
+   ```
+   Пароль пустой (Enter).
+4. iTerm / Terminal: **JetBrains Mono 15**, ligatures — как в Cursor
+5. `luna` — welcome-screen 🌙
 
 ## Проверка образа
 
@@ -41,13 +56,12 @@ sudo id
 git clone https://github.com/user/repo.git
 ```
 
-### Фаза 3 — Luna CLI
+### Фаза 4 — Luna Shell
 
 ```sh
-luna version
+luna
+luna think 5
 luna status
-luna tui
-sudo rc-service luna-agent start   # stub
 ```
 
 → [luna-cli.md](luna-cli.md)
@@ -63,7 +77,7 @@ sudo rc-service luna-agent start   # stub
 | `loadkmap failed` | Убрать `loadkmap` из boot; `setup-keymap` после login |
 | Login `luna` fail | ISO 0.1.0; нужен ≥ 0.2.0 |
 | `persistent-storage: not found` | Косметика mdev; persist через `LUNA_DATA` |
-| ping fail, curl ok | ICMP блокируется NAT — нормально |
+| `Host key verification failed` (127.0.0.1:2222) | После пересборки ISO: `ssh-keygen -R '[127.0.0.1]:2222'` |
 
 ## QEMU
 
