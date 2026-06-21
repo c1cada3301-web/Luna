@@ -2,6 +2,13 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.3] — 2026-06-21
+
+### Fixed
+
+- **`luna self-update`:** парсинг однострочного JSON GitHub — `tag_name` и `browser_download_url` больше не путаются с `"url"`
+- Запросы к GitHub API с `User-Agent: Luna/VERSION`
+
 ## [0.8.2] — 2026-06-21
 
 ### Fixed

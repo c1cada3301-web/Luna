@@ -46,16 +46,45 @@ strip_v() {
 	printf '%s' "$1" | sed 's/^v//'
 }
 
+github_curl() {
+	local url="$1"
+	local max_time="${2:-60}"
+	load_release
+	curl -fsSL --connect-timeout 15 --max-time "$max_time" \
+		-H "User-Agent: Luna/${LUNA_VERSION:-unknown}" \
+		-H "Accept: application/vnd.github+json" \
+		"$url"
+}
+
+github_download() {
+	local url="$1" out="$2"
+	load_release
+	curl -fsSL --connect-timeout 15 --max-time 300 \
+		-H "User-Agent: Luna/${LUNA_VERSION:-unknown}" \
+		-o "$out" "$url"
+}
+
+# GitHub returns minified single-line JSON; grep+ cut breaks on "url" vs "tag_name".
+json_field() {
+	local key="$1" json="$2"
+	printf '%s' "$json" | sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" | head -1
+}
+
+json_asset_download_url() {
+	local json="$1" want="$2"
+	printf '%s' "$json" | grep -o "\"browser_download_url\":\"[^\"]*${want}\"" | head -1 | cut -d'"' -f4
+}
+
 github_latest_tag() {
 	local api="https://api.github.com/repos/${LUNA_GITHUB_REPO}/releases/latest"
 	local json tag
 
-	if ! json="$(curl -fsSL --connect-timeout 15 --max-time 60 "$api" 2>/dev/null)"; then
+	if ! json="$(github_curl "$api" 2>/dev/null)"; then
 		echo "failed to fetch $api" >&2
 		return 1
 	fi
 
-	tag="$(printf '%s' "$json" | grep '"tag_name"' | head -1 | cut -d'"' -f4)"
+	tag="$(json_field tag_name "$json")"
 	[ -n "$tag" ] || { echo "no tag_name in release JSON" >&2; return 1; }
 	printf '%s' "$tag"
 }
@@ -68,12 +97,12 @@ github_userspace_url() {
 	want="luna-${ver}-userspace.tar.gz"
 	api="https://api.github.com/repos/${LUNA_GITHUB_REPO}/releases/tags/${tag}"
 
-	if ! json="$(curl -fsSL --connect-timeout 15 --max-time 60 "$api" 2>/dev/null)"; then
+	if ! json="$(github_curl "$api" 2>/dev/null)"; then
 		echo "failed to fetch release $tag" >&2
 		return 1
 	fi
 
-	url="$(printf '%s' "$json" | grep '"browser_download_url"' | grep "$want" | head -1 | cut -d'"' -f4)"
+	url="$(json_asset_download_url "$json" "$want")"
 	[ -n "$url" ] || {
 		echo "release $tag has no asset $want (need Luna 0.8.1+)" >&2
 		return 1
@@ -108,7 +137,7 @@ apply_userspace() {
 	archive="$tmpdir/userspace.tar.gz"
 
 	printf '  downloading %s\n' "$(basename "$url")"
-	curl -fsSL --connect-timeout 15 --max-time 300 -o "$archive" "$url"
+	github_download "$url" "$archive"
 
 	printf '  extracting to /\n'
 	tar -xzf "$archive" -C /
