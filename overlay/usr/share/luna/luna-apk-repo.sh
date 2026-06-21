@@ -57,15 +57,23 @@ luna_base_pkg_version() {
 	luna_base_installed || return 1
 	pkg="$(apk info luna-base 2>/dev/null | head -1)"
 	case "$pkg" in
-		luna-base-*) ;;
+		luna-base-*-r[0-9]*) ;;
 		*) return 1 ;;
 	esac
 	printf '%s' "$pkg" | sed 's/^luna-base-//; s/-r[0-9]*$//'
 }
 
+luna_version_valid() {
+	case "$1" in
+		*.*.*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
 sync_luna_release_version() {
 	local ver
 	ver="$(luna_base_pkg_version)" || return 0
+	luna_version_valid "$ver" || return 0
 	if [ -f /etc/luna-release ] && grep -q '^LUNA_VERSION=' /etc/luna-release; then
 		sed -i "s/^LUNA_VERSION=.*/LUNA_VERSION=${ver}/" /etc/luna-release
 	fi
@@ -101,6 +109,12 @@ luna_base_post_install() {
 	luna_base_fix_permissions
 }
 
+_luna_reload_apks_repo() {
+	# apk install replaces scripts on disk — refresh functions in this shell
+	# shellcheck disable=SC1091
+	. "${LUNA_SHARE:-/usr/share/luna}/luna-apk-repo.sh"
+}
+
 # Install or upgrade luna-base from local file repo. Returns 0 on success.
 upgrade_luna_base_from_repo() {
 	local mode apk_file
@@ -112,6 +126,7 @@ upgrade_luna_base_from_repo() {
 	apk update || return 1
 
 	if apk upgrade --force-overwrite luna-base; then
+		_luna_reload_apks_repo
 		luna_base_post_install "$mode"
 		return 0
 	fi
@@ -121,6 +136,7 @@ upgrade_luna_base_from_repo() {
 
 	printf '  note:     apk upgrade failed — installing %s directly\n' "$(basename "$apk_file")"
 	if apk add --force-overwrite --allow-untrusted "$apk_file"; then
+		_luna_reload_apks_repo
 		luna_base_post_install "$mode"
 		printf '  note:     luna-base installed with --allow-untrusted (fix apk keys)\n' >&2
 		return 0

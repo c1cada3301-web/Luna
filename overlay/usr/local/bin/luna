@@ -18,11 +18,15 @@ load_release() {
 }
 
 _luna_installed_ver() {
-	if ver="$(luna_base_pkg_version 2>/dev/null)" && [ -n "$ver" ]; then
+	if ver="$(luna_base_pkg_version 2>/dev/null)" && luna_version_valid "$ver"; then
 		printf '%s' "$ver"
 		return 0
 	fi
 	load_release
+	if luna_version_valid "${LUNA_VERSION:-}"; then
+		printf '%s' "$LUNA_VERSION"
+		return 0
+	fi
 	printf '%s' "${LUNA_VERSION:-unknown}"
 }
 
@@ -246,6 +250,11 @@ cmd_upgrade() {
 
 	if command -v bash >/dev/null 2>&1 && [ -x "$LUNA_SHARE/luna-self-update.sh" ]; then
 		bash "$LUNA_SHARE/luna-self-update.sh" || true
+	fi
+
+	if [ -r "$LUNA_SHARE/luna-apk-repo.sh" ]; then
+		# shellcheck disable=SC1091
+		. "$LUNA_SHARE/luna-apk-repo.sh"
 	fi
 
 	if command -v luna_apk_repo_present >/dev/null 2>&1 && luna_apk_repo_present; then

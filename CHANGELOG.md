@@ -2,6 +2,13 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.10] — 2026-06-21
+
+### Fixed
+
+- **Self-update:** re-source `luna-apk-repo.sh` после `apk install` (старые функции в памяти снова писали `LUNA_VERSION=luna-base`)
+- **`luna upgrade`:** reload scripts после self-update; игнор битого `LUNA_VERSION` без `X.Y.Z`
+
 ## [0.8.9] — 2026-06-21
 
 ### Fixed

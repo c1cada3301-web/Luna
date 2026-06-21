@@ -134,8 +134,12 @@ github_apk_repo_url() {
 installed_luna_ver() {
 	local ver
 	load_release
-	if ver="$(luna_base_pkg_version 2>/dev/null)" && [ -n "$ver" ]; then
+	if ver="$(luna_base_pkg_version 2>/dev/null)" && luna_version_valid "$ver"; then
 		printf '%s' "$ver"
+		return 0
+	fi
+	if luna_version_valid "${LUNA_VERSION:-}"; then
+		printf '%s' "$LUNA_VERSION"
 		return 0
 	fi
 	printf '%s' "${LUNA_VERSION:-0.0.0}"
