@@ -1,7 +1,7 @@
 # Maintainer: Luna <luna@example.com>
 # Luna userspace — built from overlay/ (pkgver patched by scripts/build-apk-repo.sh)
 pkgname=luna-base
-pkgver=0.8.8
+pkgver=0.8.9
 pkgrel=0
 pkgdesc="Luna OS userspace (CLI, scripts, branding)"
 url="https://github.com/c1cada3301-web/Luna"

@@ -48,10 +48,24 @@ luna_base_apk_file() {
 	find "$LUNA_APK_REPO_ROOT/noarch" -maxdepth 1 -name 'luna-base-*.apk' -print -quit 2>/dev/null
 }
 
+luna_base_installed() {
+	apk info -e luna-base >/dev/null 2>&1
+}
+
+luna_base_pkg_version() {
+	local pkg
+	luna_base_installed || return 1
+	pkg="$(apk info luna-base 2>/dev/null | head -1)"
+	case "$pkg" in
+		luna-base-*) ;;
+		*) return 1 ;;
+	esac
+	printf '%s' "$pkg" | sed 's/^luna-base-//; s/-r[0-9]*$//'
+}
+
 sync_luna_release_version() {
 	local ver
-	ver="$(apk info -e luna-base 2>/dev/null | sed 's/^luna-base-//; s/-r[0-9]*$//')"
-	[ -n "$ver" ] || return 0
+	ver="$(luna_base_pkg_version)" || return 0
 	if [ -f /etc/luna-release ] && grep -q '^LUNA_VERSION=' /etc/luna-release; then
 		sed -i "s/^LUNA_VERSION=.*/LUNA_VERSION=${ver}/" /etc/luna-release
 	fi

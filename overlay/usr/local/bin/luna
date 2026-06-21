@@ -18,8 +18,8 @@ load_release() {
 }
 
 _luna_installed_ver() {
-	if pkg="$(apk info -e luna-base 2>/dev/null)" && [ -n "$pkg" ]; then
-		printf '%s' "$pkg" | sed 's/^luna-base-//; s/-r[0-9]*$//'
+	if ver="$(luna_base_pkg_version 2>/dev/null)" && [ -n "$ver" ]; then
+		printf '%s' "$ver"
 		return 0
 	fi
 	load_release
@@ -27,8 +27,9 @@ _luna_installed_ver() {
 }
 
 cmd_version() {
+	ver="$(_luna_installed_ver)"
 	load_release
-	printf 'Luna %s\n' "${LUNA_VERSION:-unknown}"
+	printf 'Luna %s\n' "$ver"
 	printf '  phase:  %s\n' "${LUNA_PHASE:-?}"
 	printf '  base:   %s\n' "${LUNA_BASE:-Alpine}"
 	printf '  kernel: %s\n' "$(uname -r)"
@@ -85,7 +86,7 @@ cmd_status() {
 	uptime_h=$(( uptime_s / 3600 ))
 	uptime_m=$(( (uptime_s % 3600) / 60 ))
 
-	printf '🌙 Luna %s · %s · %dh %dm\n' "${LUNA_VERSION:-?}" "$hostname" "$uptime_h" "$uptime_m"
+	printf '🌙 Luna %s · %s · %dh %dm\n' "$(_luna_installed_ver)" "$hostname" "$uptime_h" "$uptime_m"
 	printf '  boot:     %s\n' "$(_boot_mode)"
 	printf '  memory:   '
 	free -h 2>/dev/null | awk '/^Mem:/ { print $3 " used / " $2 " total" }' || echo "n/a"

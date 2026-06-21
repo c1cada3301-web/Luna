@@ -2,6 +2,12 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.8.9] — 2026-06-21
+
+### Fixed
+
+- **Версия Luna:** `apk info -e` возвращает только `luna-base` — парсинг через `apk info luna-base` (`luna-base-0.8.8-r0`)
+
 ## [0.8.8] — 2026-06-21
 
 ### Added
