@@ -2,6 +2,14 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/). Версия образа — `overlay/etc/luna-release`.
 
+## [0.9.5] — 2026-06-21
+
+### Fixed
+
+- **`luna install`:** `APKREPOSOPTS=-1` затирал local repo перед Disk & Install — теперь CDN + `/var/lib/luna/apk-repo` + bundled
+- **Проверка после setup-alpine:** abort если нет `/sbin/init` на диске (GRUB без rootfs → recovery shell)
+- **Порядок:** `prepare_setup_alpine` до answer file; явный fail при ошибке setup-alpine
+
 ## [0.9.4] — 2026-06-21
 
 ### Fixed
